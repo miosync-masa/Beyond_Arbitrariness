@@ -2,8 +2,6 @@
 
 **Paper:** *Beyond Arbitrariness: Universal Body–Sound Mapping Across 11,540 Language Varieties*
 
-**Target:** Proceedings of the National Academy of Sciences (PNAS)
-
 ---
 
 ## Overview
