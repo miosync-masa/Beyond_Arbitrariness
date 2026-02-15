@@ -107,13 +107,7 @@ No external packages required.
 
 [To be added upon publication]
 
-## License
-
-[To be determined]
-
 ---
-
-*"分けることは必要。でも別れる必要はない。"*
 
 *Differentiation is necessary. Separation is not.*
 
