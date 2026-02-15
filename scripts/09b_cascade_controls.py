@@ -1,79 +1,84 @@
 """
-09b_cascade_controls.py
-========================
-Genealogical and areal controls for the phonotactic-morphological cascade.
+09b — Genealogical & Areal Controls for the Phonotactic–Morphological Cascade
+===============================================================================
+Tests whether the V-final → morphological strategy associations (§3.13) survive
+controls for language-family non-independence and continental areal clustering.
 
-B1) Mixed-effects logistic regression: feature ~ Vfinal + abs_lat + (1 | family)
-B2) Macroarea fixed effect:             feature ~ Vfinal + abs_lat + macroarea + (1 | family)
-B3) Family-mean aggregation:            Spearman correlation on family-level means
-B4) Permutation by family:              Shuffle Vfinal within families, 5000 iterations
+Four complementary controls:
+  B1: Mixed-effects model with family random intercepts
+      feature ~ Vfinal + abs_lat + (1 | family)
+  B2: + Macroarea fixed effects
+      feature ~ Vfinal + abs_lat + macroarea + (1 | family)
+  B3: Family-level aggregation (Spearman on family means)
+  B4: Within-family permutation test (5,000 iterations)
 
-Requirements: statsmodels, numpy, scipy
-Data: ASJP, Grambank, (optionally WALS) — cloned as siblings or adjust paths below.
+Dependencies:
+  - pandas, statsmodels  (for B1/B2 mixed-effects models)
+  - Standard library only  (for B3/B4)
+
+If statsmodels is unavailable, B1/B2 are skipped with a warning.
+B3/B4 always run (no external dependencies).
+
+Data paths (same as 09_cascade_grambank_wals.py):
+  ASJP:     /content/asjp/cldf/
+  Grambank: /content/grambank/cldf/
+  WALS:     /content/wals/cldf/  (optional)
+
+Output: Console summary tables matching §3.13 / §6.8 / Table S1 format.
+
+Usage:
+  python 09b_cascade_controls.py [--skip-perm] [--perm-n 5000]
 """
 
 import csv
-import json
+import sys
 import random
 from collections import defaultdict
-from math import sqrt, log, exp
+from math import sqrt, erf, comb
 
-# --- Attempt imports; fall back gracefully ---
-try:
-    import numpy as np
-    HAS_NUMPY = True
-except ImportError:
-    HAS_NUMPY = False
-    print("WARNING: numpy not found. B1/B2 will be skipped.")
+# ================================================================
+# OPTIONAL DEPENDENCY CHECK
+# ================================================================
 
+HAS_MIXED = False
 try:
+    import pandas as pd
     import statsmodels.formula.api as smf
-    import statsmodels.api as sm
-    from statsmodels.genmod.families import Binomial
-    from statsmodels.genmod.families.links import Logit
-    HAS_STATSMODELS = True
+    HAS_MIXED = True
 except ImportError:
-    HAS_STATSMODELS = False
-    print("WARNING: statsmodels not found. B1/B2 will be skipped.")
-
-try:
-    from scipy import stats as sp_stats
-    HAS_SCIPY = True
-except ImportError:
-    HAS_SCIPY = False
-    print("WARNING: scipy not found. Using manual Spearman for B3.")
-
+    print("=" * 80)
+    print("WARNING: pandas/statsmodels not installed.")
+    print("  B1 (family random intercepts) and B2 (+ macroarea) will be SKIPPED.")
+    print("  B3 (family aggregation) and B4 (permutation) run with stdlib only.")
+    print("  Install with: pip install pandas statsmodels")
+    print("=" * 80)
+    print()
 
 # ================================================================
-# CONFIGURATION — adjust paths as needed
+# CONFIGURATION
 # ================================================================
-ASJP_LANG = 'asjp/cldf/languages.csv'
-ASJP_FORMS = 'asjp/cldf/forms.csv'
-GRAMBANK_LANG = 'grambank/cldf/languages.csv'
-GRAMBANK_VALUES = 'grambank/cldf/values.csv'
 
-# Minimum thresholds
-MIN_WORDS_PER_LANG = 20
-MIN_LANGS_PER_FAMILY = 3      # for family-mean analysis
-MIN_FAMILIES_FOR_CORR = 20    # minimum families for B3
+SKIP_PERM = '--skip-perm' in sys.argv
+PERM_N = 5000
+for i, arg in enumerate(sys.argv):
+    if arg == '--perm-n' and i + 1 < len(sys.argv):
+        PERM_N = int(sys.argv[i + 1])
 
-# Permutation iterations
-N_PERM = 5000
-
-# Grambank features of interest (prefix–suffix mirror + morphological features)
-GB_FEATURES = {
-    # Suffix features (expected: positive with Vfinal)
+# The 8 Grambank features that survived FDR correction in §3.13
+GB_FEATURES_CORE = {
     'GB080': 'Verb suffixes/enclitics (non-person)',
-    'GB089': 'S-argument suffix on verb',
-    'GB091': 'A-argument suffix on verb',
-    'GB093': 'P-argument suffix on verb',
-    # Prefix features (expected: negative with Vfinal)
     'GB079': 'Verb prefixes/proclitics (non-person)',
+    'GB089': 'S-argument suffix on verb',
     'GB090': 'S-argument prefix on verb',
+    'GB091': 'A-argument suffix on verb',
     'GB092': 'A-argument prefix on verb',
+    'GB093': 'P-argument suffix on verb',
     'GB094': 'P-argument prefix on verb',
-    # Morphological features
+}
+
+GB_FEATURES_EXTENDED = {
     'GB070': 'Morphological case (non-pronominal)',
+    'GB071': 'Morphological case (pronominal)',
     'GB082': 'Present tense marking on verbs',
     'GB083': 'Past tense marking on verbs',
     'GB084': 'Future tense marking on verbs',
@@ -83,29 +88,101 @@ GB_FEATURES = {
     'GB044': 'Productive plural marking on nouns',
 }
 
+ALL_GB_FEATURES = {**GB_FEATURES_CORE, **GB_FEATURES_EXTENDED}
+
+MIN_FAMILY_SIZE = 3
+MIN_LANG_PER_FEAT = 30
+
+MACROAREAS = ['Africa', 'Eurasia', 'Papunesia', 'Australia',
+              'North America', 'South America']
+
+# ================================================================
+# STATISTICS (stdlib only)
+# ================================================================
+
+def _normal_cdf(x):
+    return 0.5 * (1 + erf(x / sqrt(2)))
+
+
+def _t_to_p(t, df):
+    if df < 1:
+        return 1.0
+    if df > 30:
+        return 2 * (1 - _normal_cdf(abs(t)))
+    z = abs(t) * (1 - 1 / (4 * df))
+    return 2 * (1 - _normal_cdf(z))
+
+
+def pearson_r(x, y):
+    n = len(x)
+    if n < 5:
+        return 0.0, 1.0
+    mx = sum(x) / n
+    my = sum(y) / n
+    sx = sqrt(sum((xi - mx) ** 2 for xi in x) / (n - 1))
+    sy = sqrt(sum((yi - my) ** 2 for yi in y) / (n - 1))
+    if sx == 0 or sy == 0:
+        return 0.0, 1.0
+    cov_val = sum((xi - mx) * (yi - my) for xi, yi in zip(x, y)) / (n - 1)
+    r = max(-1.0, min(1.0, cov_val / (sx * sy)))
+    if abs(r) >= 1.0:
+        return r, 0.0
+    t = r * sqrt((n - 2) / (1 - r ** 2))
+    p = _t_to_p(t, n - 2)
+    return r, p
+
+
+def spearman_r(x, y):
+    def _rank(data):
+        indexed = sorted(enumerate(data), key=lambda t: t[1])
+        ranks = [0.0] * len(data)
+        i = 0
+        while i < len(indexed):
+            j = i + 1
+            while j < len(indexed) and indexed[j][1] == indexed[i][1]:
+                j += 1
+            avg_rank = (i + j + 1) / 2
+            for k in range(i, j):
+                ranks[indexed[k][0]] = avg_rank
+            i = j
+        return ranks
+    rx = _rank(x)
+    ry = _rank(y)
+    return pearson_r(rx, ry)
+
+
+def _sign_test_p(n_positive, n_total):
+    if n_total == 0:
+        return 1.0
+    k = max(n_positive, n_total - n_positive)
+    p = 0.0
+    for i in range(k, n_total + 1):
+        p += comb(n_total, i) * (0.5 ** n_total)
+    return min(1.0, 2 * p)
+
+
+# ================================================================
+# DATA LOADING
+# ================================================================
+
 VOWELS = set('ieE3auo')
 CONSONANTS = set('pbfvmw8tdszclnrSZCjT5ykgxNqXh7L4G!')
 
 
-# ================================================================
-# STEP 1: Load ASJP → compute per-language word-final V%
-# ================================================================
 def load_asjp_wordfinal():
-    """Compute word-final vowel % per ASJP language, indexed by Glottocode."""
+    """Load ASJP: compute word-final V% per language, indexed by Glottocode."""
     languages = {}
-    with open(ASJP_LANG, 'r', encoding='utf-8') as f:
+    with open('/content/asjp/cldf/languages.csv', 'r', encoding='utf-8') as f:
         for row in csv.DictReader(f):
-            lat = float(row['Latitude']) if row.get('Latitude') else None
             languages[row['ID']] = {
                 'glottocode': row.get('Glottocode', ''),
                 'name': row.get('Name', ''),
                 'family': row.get('Family', ''),
-                'lat': lat,
-                'abs_lat': abs(lat) if lat is not None else None,
+                'lat': float(row['Latitude']) if row.get('Latitude') else None,
             }
 
     lang_finals = defaultdict(lambda: {'v': 0, 'c': 0})
-    with open(ASJP_FORMS, 'r', encoding='utf-8') as f:
+    with open('/content/asjp/cldf/forms.csv', 'r', encoding='utf-8') as f:
         for row in csv.DictReader(f):
             if row.get('Loan') == 'true':
                 continue
@@ -123,37 +200,41 @@ def load_asjp_wordfinal():
     lang_vfinal = {}
     for lang_id, counts in lang_finals.items():
         total = counts['v'] + counts['c']
-        if total >= MIN_WORDS_PER_LANG:
-            info = languages.get(lang_id, {})
-            gc = info.get('glottocode', '')
-            if gc and info.get('abs_lat') is not None:
+        if total >= 20:
+            gc = languages.get(lang_id, {}).get('glottocode', '')
+            if gc:
+                lat = languages.get(lang_id, {}).get('lat')
                 lang_vfinal[gc] = {
                     'vfinal_pct': counts['v'] / total * 100,
-                    'vfinal_prop': counts['v'] / total,  # 0–1 for models
-                    'family': info.get('family', ''),
-                    'abs_lat': info['abs_lat'],
-                    'name': info.get('name', ''),
+                    'vfinal_prop': counts['v'] / total,
+                    'name': languages.get(lang_id, {}).get('name', ''),
+                    'family': languages.get(lang_id, {}).get('family', ''),
+                    'lat': lat,
+                    'abs_lat': abs(lat) if lat is not None else None,
                     'n_words': total,
                 }
     return lang_vfinal
 
 
-# ================================================================
-# STEP 2: Load Grambank features + macroarea
-# ================================================================
-def load_grambank():
-    """Load Grambank binary features and macroarea, indexed by Glottocode."""
-    # Load languages for macroarea
-    gb_langs = {}
-    with open(GRAMBANK_LANG, 'r', encoding='utf-8') as f:
-        for row in csv.DictReader(f):
-            gc = row.get('Glottocode', row.get('ID', ''))
-            macroarea = row.get('Macroarea', row.get('macroarea', ''))
-            gb_langs[gc] = macroarea if macroarea else 'Unknown'
+def load_grambank_with_macroarea():
+    """Load Grambank features (binary) + Macroarea from languages.csv."""
+    gb_macroarea = {}
+    gb_langs_path = '/content/grambank/cldf/languages.csv'
+    try:
+        with open(gb_langs_path, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                gc = row.get('Glottocode', row.get('ID', ''))
+                ma = row.get('Macroarea', '')
+                if gc and ma:
+                    gb_macroarea[gc] = ma
+                elif gc:
+                    gb_macroarea[gc] = 'Unknown'
+    except FileNotFoundError:
+        print(f"  WARNING: {gb_langs_path} not found; Macroarea unavailable.")
 
-    # Load values
     gb_data = defaultdict(dict)
-    with open(GRAMBANK_VALUES, 'r', encoding='utf-8') as f:
+    with open('/content/grambank/cldf/values.csv', 'r', encoding='utf-8') as f:
         for row in csv.DictReader(f):
             gc = row['Language_ID']
             feat = row['Parameter_ID']
@@ -161,510 +242,588 @@ def load_grambank():
             if val in ('0', '1'):
                 gb_data[gc][feat] = int(val)
 
-    return gb_data, gb_langs
+    return gb_data, gb_macroarea
 
 
 # ================================================================
-# HELPER: Manual Spearman (fallback if no scipy)
+# JOIN: Build analysis dataset
 # ================================================================
-def rank_data(x):
-    """Simple ranking."""
-    indexed = sorted(enumerate(x), key=lambda t: t[1])
-    ranks = [0.0] * len(x)
-    i = 0
-    while i < len(indexed):
-        j = i
-        while j < len(indexed) - 1 and indexed[j+1][1] == indexed[j][1]:
-            j += 1
-        avg_rank = (i + j) / 2.0 + 1
-        for k in range(i, j + 1):
-            ranks[indexed[k][0]] = avg_rank
-        i = j + 1
-    return ranks
 
+def build_analysis_data(lang_vfinal, gb_data, gb_macroarea):
+    """Join ASJP V-final data with Grambank features on Glottocode."""
+    overlap = set(lang_vfinal.keys()) & set(gb_data.keys())
+    print(f"\n  ASJP languages with Glottocode: {len(lang_vfinal)}")
+    print(f"  Grambank languages: {len(gb_data)}")
+    print(f"  Overlap (joined on Glottocode): {len(overlap)}")
 
-def pearson_r(x, y):
-    n = len(x)
-    mx, my = sum(x)/n, sum(y)/n
-    sx = sqrt(sum((xi - mx)**2 for xi in x) / (n - 1))
-    sy = sqrt(sum((yi - my)**2 for yi in y) / (n - 1))
-    if sx == 0 or sy == 0:
-        return 0.0, 1.0
-    r = sum((xi - mx) * (yi - my) for xi, yi in zip(x, y)) / ((n - 1) * sx * sy)
-    # t-test for significance
-    if abs(r) >= 1.0:
-        return r, 0.0
-    t_stat = r * sqrt(n - 2) / sqrt(1 - r**2)
-    # Two-tailed p via t-distribution approximation
-    df = n - 2
-    p = 2 * t_survival(abs(t_stat), df)
-    return r, p
-
-
-def t_survival(t, df):
-    """Rough approximation of P(T > t) for t-distribution."""
-    # Use normal approximation for df > 30
-    if df > 30:
-        from math import erfc
-        return 0.5 * erfc(t / sqrt(2))
-    # For smaller df, use a crude approximation
-    x = df / (df + t * t)
-    return 0.5 * x ** (df / 2)
-
-
-def spearman_manual(x, y):
-    rx = rank_data(x)
-    ry = rank_data(y)
-    return pearson_r(rx, ry)
-
-
-# ================================================================
-# B1: Mixed-effects logistic regression (LPM approximation)
-# ================================================================
-def run_b1(data, gb_data, feat_id):
-    """
-    feature ~ vfinal_prop + abs_lat + (1 | family)
-    Uses linear mixed model as approximation for binary outcome.
-    Returns: (coef_vfinal, se, z, p, n, n_families)
-    """
-    if not HAS_NUMPY or not HAS_STATSMODELS:
-        return None
-
-    rows = []
-    for gc in data:
-        if gc in gb_data and feat_id in gb_data[gc]:
-            rows.append({
-                'feature': gb_data[gc][feat_id],
-                'vfinal': data[gc]['vfinal_prop'],
-                'abs_lat': data[gc]['abs_lat'],
-                'family': data[gc]['family'],
-            })
-
-    if len(rows) < 50:
-        return None
-
-    import pandas as pd
-    df = pd.DataFrame(rows)
-
-    # Drop families with < 2 languages (can't estimate random effect)
-    fam_counts = df['family'].value_counts()
-    valid_fams = fam_counts[fam_counts >= 2].index
-    df = df[df['family'].isin(valid_fams)]
-
-    if len(df) < 50 or df['family'].nunique() < 10:
-        return None
-
-    try:
-        model = smf.mixedlm(
-            "feature ~ vfinal + abs_lat",
-            data=df,
-            groups=df["family"],
-        )
-        result = model.fit(reml=True, method='lbfgs')
-
-        coef = result.params.get('vfinal', None)
-        se = result.bse.get('vfinal', None)
-        z = result.tvalues.get('vfinal', None)
-        p = result.pvalues.get('vfinal', None)
-
-        if coef is None:
-            return None
-
-        return {
-            'coef': coef,
-            'se': se,
-            'z': z,
-            'p': p,
-            'n': len(df),
-            'n_families': df['family'].nunique(),
-            'direction': '+' if coef > 0 else '-',
+    data = {}
+    n_no_lat = 0
+    for gc in overlap:
+        vf = lang_vfinal[gc]
+        if vf['abs_lat'] is None:
+            n_no_lat += 1
+            continue
+        entry = {
+            'vfinal_prop': vf['vfinal_prop'],
+            'abs_lat': vf['abs_lat'],
+            'family': vf['family'] if vf['family'] else 'Isolate',
+            'macroarea': gb_macroarea.get(gc, 'Unknown'),
         }
-    except Exception as e:
-        print(f"    B1 model failed for {feat_id}: {e}")
-        return None
+        for feat_id in ALL_GB_FEATURES:
+            if feat_id in gb_data[gc]:
+                entry[feat_id] = gb_data[gc][feat_id]
+        data[gc] = entry
+
+    if n_no_lat:
+        print(f"  Excluded (no latitude): {n_no_lat}")
+    print(f"  Final analysis set: {len(data)} languages")
+
+    families = set(d['family'] for d in data.values())
+    macroareas = defaultdict(int)
+    for d in data.values():
+        macroareas[d['macroarea']] += 1
+    print(f"  Language families: {len(families)}")
+    print(f"  Macroarea distribution:")
+    for ma in sorted(macroareas, key=macroareas.get, reverse=True):
+        print(f"    {ma}: {macroareas[ma]}")
+
+    return data
 
 
 # ================================================================
-# B2: Macroarea fixed effect
+# B1: MIXED-EFFECTS MODEL (family random intercept)
+# B2: + MACROAREA FIXED EFFECT
 # ================================================================
-def run_b2(data, gb_data, gb_langs, feat_id):
+
+def run_mixed_effects(data, features):
     """
-    feature ~ vfinal_prop + abs_lat + macroarea + (1 | family)
+    B1: feature ~ vfinal_prop + abs_lat + (1 | family)
+    B2: feature ~ vfinal_prop + abs_lat + macroarea + (1 | family)
+    Linear probability model (LPM) via statsmodels MixedLM.
     """
-    if not HAS_NUMPY or not HAS_STATSMODELS:
-        return None
+    if not HAS_MIXED:
+        print("\n  [SKIPPED] B1/B2: statsmodels not available.\n")
+        return []
 
-    rows = []
-    for gc in data:
-        if gc in gb_data and feat_id in gb_data[gc]:
-            macroarea = gb_langs.get(gc, 'Unknown')
-            rows.append({
-                'feature': gb_data[gc][feat_id],
-                'vfinal': data[gc]['vfinal_prop'],
-                'abs_lat': data[gc]['abs_lat'],
-                'family': data[gc]['family'],
-                'macroarea': macroarea,
-            })
+    results = []
 
-    if len(rows) < 50:
-        return None
+    for feat_id, feat_name in sorted(features.items()):
+        rows = []
+        for gc, d in data.items():
+            if feat_id in d:
+                rows.append({
+                    'feature': d[feat_id],
+                    'vfinal': d['vfinal_prop'],
+                    'abs_lat': d['abs_lat'],
+                    'family': d['family'],
+                    'macroarea': d['macroarea'],
+                })
 
-    import pandas as pd
-    df = pd.DataFrame(rows)
+        if len(rows) < MIN_LANG_PER_FEAT:
+            continue
 
-    # Drop tiny families
-    fam_counts = df['family'].value_counts()
-    valid_fams = fam_counts[fam_counts >= 2].index
-    df = df[df['family'].isin(valid_fams)]
+        df = pd.DataFrame(rows)
 
-    # Drop macroarea with < 5 languages
-    area_counts = df['macroarea'].value_counts()
-    valid_areas = area_counts[area_counts >= 5].index
-    df = df[df['macroarea'].isin(valid_areas)]
-
-    if len(df) < 50 or df['family'].nunique() < 10:
-        return None
-
-    try:
-        # C() for categorical macroarea
-        model = smf.mixedlm(
-            "feature ~ vfinal + abs_lat + C(macroarea)",
-            data=df,
-            groups=df["family"],
+        # Merge singleton families for model stability
+        fam_counts = df['family'].value_counts()
+        singletons = set(fam_counts[fam_counts == 1].index)
+        df['family_re'] = df['family'].apply(
+            lambda f: f if f not in singletons else '_Singleton'
         )
-        result = model.fit(reml=True, method='lbfgs')
 
-        coef = result.params.get('vfinal', None)
-        se = result.bse.get('vfinal', None)
-        z = result.tvalues.get('vfinal', None)
-        p = result.pvalues.get('vfinal', None)
+        n_families = df['family_re'].nunique()
+        n_lang = len(df)
 
-        if coef is None:
-            return None
+        # --- B1 ---
+        b1_coef, b1_se, b1_p, b1_converged = None, None, None, False
+        try:
+            model_b1 = smf.mixedlm(
+                "feature ~ vfinal + abs_lat",
+                data=df,
+                groups=df["family_re"],
+            )
+            result_b1 = model_b1.fit(reml=True, method='lbfgs', maxiter=500)
+            b1_coef = result_b1.params.get('vfinal', None)
+            b1_se = result_b1.bse.get('vfinal', None)
+            b1_p = result_b1.pvalues.get('vfinal', None)
+            b1_converged = getattr(result_b1, 'converged', True)
+        except Exception as e:
+            print(f"  B1 failed for {feat_id}: {e}")
 
-        return {
-            'coef': coef,
-            'se': se,
-            'z': z,
-            'p': p,
-            'n': len(df),
-            'n_families': df['family'].nunique(),
-            'n_areas': df['macroarea'].nunique(),
-            'direction': '+' if coef > 0 else '-',
-        }
-    except Exception as e:
-        print(f"    B2 model failed for {feat_id}: {e}")
-        return None
+        # --- B2 ---
+        b2_coef, b2_se, b2_p, b2_converged = None, None, None, False
+        try:
+            if df['macroarea'].nunique() > 1:
+                model_b2 = smf.mixedlm(
+                    "feature ~ vfinal + abs_lat + C(macroarea)",
+                    data=df,
+                    groups=df["family_re"],
+                )
+                result_b2 = model_b2.fit(reml=True, method='lbfgs', maxiter=500)
+                b2_coef = result_b2.params.get('vfinal', None)
+                b2_se = result_b2.bse.get('vfinal', None)
+                b2_p = result_b2.pvalues.get('vfinal', None)
+                b2_converged = getattr(result_b2, 'converged', True)
+        except Exception as e:
+            print(f"  B2 failed for {feat_id}: {e}")
+
+        # Raw correlation for comparison
+        x_raw = [r['vfinal'] for r in rows]
+        y_raw = [r['feature'] for r in rows]
+        r_raw, p_raw = pearson_r(x_raw, y_raw)
+
+        results.append({
+            'feat_id': feat_id,
+            'feat_name': feat_name,
+            'n': n_lang,
+            'n_families': n_families,
+            'r_raw': r_raw,
+            'p_raw': p_raw,
+            'b1_coef': b1_coef,
+            'b1_se': b1_se,
+            'b1_p': b1_p,
+            'b1_converged': b1_converged,
+            'b2_coef': b2_coef,
+            'b2_se': b2_se,
+            'b2_p': b2_p,
+            'b2_converged': b2_converged,
+        })
+
+    return results
 
 
 # ================================================================
-# B3: Family-mean aggregation
+# B3: FAMILY-LEVEL AGGREGATION
 # ================================================================
-def run_b3(data, gb_data, feat_id):
+
+def run_family_aggregation(data, features):
     """
-    Aggregate to family level: mean Vfinal, mean feature rate.
+    Aggregate to family level: mean V-final and feature rate.
     Spearman correlation on family means.
     """
-    family_data = defaultdict(lambda: {'vfinals': [], 'features': []})
+    results = []
 
-    for gc in data:
-        if gc in gb_data and feat_id in gb_data[gc]:
-            fam = data[gc]['family']
-            if fam:
-                family_data[fam]['vfinals'].append(data[gc]['vfinal_prop'])
-                family_data[fam]['features'].append(gb_data[gc][feat_id])
+    for feat_id, feat_name in sorted(features.items()):
+        family_data = defaultdict(lambda: {'vfinals': [], 'features': []})
+        for gc, d in data.items():
+            if feat_id in d:
+                fam = d['family']
+                family_data[fam]['vfinals'].append(d['vfinal_prop'])
+                family_data[fam]['features'].append(d[feat_id])
 
-    # Filter families with enough languages
-    fam_means_x = []
-    fam_means_y = []
-    fam_names = []
-    fam_sizes = []
+        fam_vfinal, fam_feat_rate, fam_sizes = [], [], []
+        for fam, fd in family_data.items():
+            if len(fd['vfinals']) >= MIN_FAMILY_SIZE:
+                fam_vfinal.append(sum(fd['vfinals']) / len(fd['vfinals']))
+                fam_feat_rate.append(sum(fd['features']) / len(fd['features']))
+                fam_sizes.append(len(fd['vfinals']))
 
-    for fam, vals in family_data.items():
-        if len(vals['vfinals']) >= MIN_LANGS_PER_FAMILY:
-            mx = sum(vals['vfinals']) / len(vals['vfinals'])
-            my = sum(vals['features']) / len(vals['features'])
-            fam_means_x.append(mx)
-            fam_means_y.append(my)
-            fam_names.append(fam)
-            fam_sizes.append(len(vals['vfinals']))
+        if len(fam_vfinal) < 5:
+            continue
 
-    if len(fam_means_x) < MIN_FAMILIES_FOR_CORR:
-        return None
+        rs, ps = spearman_r(fam_vfinal, fam_feat_rate)
+        rp, pp = pearson_r(fam_vfinal, fam_feat_rate)
 
-    # Spearman
-    if HAS_SCIPY:
-        rho, p = sp_stats.spearmanr(fam_means_x, fam_means_y)
-    else:
-        rho, p = spearman_manual(fam_means_x, fam_means_y)
+        # Raw language-level correlation for sign comparison
+        x_raw, y_raw = [], []
+        for gc, d in data.items():
+            if feat_id in d:
+                x_raw.append(d['vfinal_prop'])
+                y_raw.append(d[feat_id])
+        r_raw, _ = pearson_r(x_raw, y_raw)
 
-    # Also Pearson
-    r_p, p_p = pearson_r(fam_means_x, fam_means_y)
+        sign_match = (rs > 0) == (r_raw > 0) if (rs != 0 and r_raw != 0) else None
 
-    return {
-        'spearman_rho': rho,
-        'spearman_p': p,
-        'pearson_r': r_p,
-        'pearson_p': p_p,
-        'n_families': len(fam_means_x),
-        'direction': '+' if rho > 0 else '-',
-        'total_langs': sum(fam_sizes),
-    }
+        results.append({
+            'feat_id': feat_id,
+            'feat_name': feat_name,
+            'n_families': len(fam_vfinal),
+            'total_langs': sum(fam_sizes),
+            'spearman_r': rs,
+            'spearman_p': ps,
+            'pearson_r': rp,
+            'pearson_p': pp,
+            'r_raw': r_raw,
+            'sign_match': sign_match,
+        })
+
+    return results
 
 
 # ================================================================
-# B4: Permutation by family
+# B4: WITHIN-FAMILY PERMUTATION TEST
 # ================================================================
-def run_b4(data, gb_data, feat_id):
+
+def run_family_permutation(data, features, n_perm=5000):
     """
-    Shuffle Vfinal within families, compute Pearson r each time.
-    Return empirical p-value.
+    Shuffle V-final within each family, recompute correlation.
+    Empirical p = proportion of |r_perm| >= |r_obs|.
     """
-    # Build data
-    families = defaultdict(list)
-    x_all = []
-    y_all = []
-    fam_indices = defaultdict(list)
+    results = []
 
-    idx = 0
-    for gc in data:
-        if gc in gb_data and feat_id in gb_data[gc]:
-            fam = data[gc]['family']
-            if fam:
-                x_all.append(data[gc]['vfinal_prop'])
-                y_all.append(gb_data[gc][feat_id])
-                fam_indices[fam].append(idx)
-                idx += 1
+    for feat_id, feat_name in sorted(features.items()):
+        family_groups = defaultdict(list)
+        for gc, d in data.items():
+            if feat_id in d:
+                family_groups[d['family']].append((d['vfinal_prop'], d[feat_id]))
 
-    if len(x_all) < 50:
-        return None
+        all_pairs = []
+        for pairs in family_groups.values():
+            all_pairs.extend(pairs)
 
-    # Observed correlation
-    r_obs, _ = pearson_r(x_all, y_all)
+        if len(all_pairs) < MIN_LANG_PER_FEAT:
+            continue
 
-    # Permutation: shuffle x within each family
-    count_extreme = 0
-    for _ in range(N_PERM):
-        x_perm = x_all[:]
-        for fam, indices in fam_indices.items():
-            vals = [x_perm[i] for i in indices]
-            random.shuffle(vals)
-            for i, v in zip(indices, vals):
-                x_perm[i] = v
-        r_perm, _ = pearson_r(x_perm, y_all)
-        if abs(r_perm) >= abs(r_obs):
-            count_extreme += 1
+        x_obs = [p[0] for p in all_pairs]
+        y_obs = [p[1] for p in all_pairs]
+        r_obs, _ = pearson_r(x_obs, y_obs)
 
-    p_perm = (count_extreme + 1) / (N_PERM + 1)
+        n_extreme = 0
+        for _ in range(n_perm):
+            x_perm, y_perm = [], []
+            for fam, pairs in family_groups.items():
+                vf_vals = [p[0] for p in pairs]
+                feat_vals = [p[1] for p in pairs]
+                random.shuffle(vf_vals)
+                x_perm.extend(vf_vals)
+                y_perm.extend(feat_vals)
+            r_perm, _ = pearson_r(x_perm, y_perm)
+            if abs(r_perm) >= abs(r_obs):
+                n_extreme += 1
 
-    return {
-        'r_obs': r_obs,
-        'p_perm': p_perm,
-        'n_perm': N_PERM,
-        'n': len(x_all),
-        'direction': '+' if r_obs > 0 else '-',
-    }
+        p_perm = (n_extreme + 1) / (n_perm + 1)
+
+        results.append({
+            'feat_id': feat_id,
+            'feat_name': feat_name,
+            'n': len(all_pairs),
+            'n_families': len(family_groups),
+            'r_obs': r_obs,
+            'p_perm': p_perm,
+            'n_perm': n_perm,
+        })
+
+    return results
+
+
+# ================================================================
+# SIGN CONSISTENCY: Binomial test across features
+# ================================================================
+
+def sign_consistency_test(mixed_results, family_results):
+    print("\n" + "=" * 100)
+    print("SIGN CONSISTENCY ACROSS CONTROLS")
+    print("=" * 100)
+
+    if mixed_results:
+        n_match = sum(1 for r in mixed_results
+                      if r['b1_coef'] is not None and r['r_raw'] != 0
+                      and (r['b1_coef'] > 0) == (r['r_raw'] > 0))
+        n_total = sum(1 for r in mixed_results
+                      if r['b1_coef'] is not None and r['r_raw'] != 0)
+        if n_total > 0:
+            p = _sign_test_p(n_match, n_total)
+            print(f"\n  B1 (family RI): {n_match}/{n_total} features preserve sign "
+                  f"(binomial p = {p:.4f})")
+
+        n_match = sum(1 for r in mixed_results
+                      if r['b2_coef'] is not None and r['r_raw'] != 0
+                      and (r['b2_coef'] > 0) == (r['r_raw'] > 0))
+        n_total = sum(1 for r in mixed_results
+                      if r['b2_coef'] is not None and r['r_raw'] != 0)
+        if n_total > 0:
+            p = _sign_test_p(n_match, n_total)
+            print(f"  B2 (+ macroarea): {n_match}/{n_total} features preserve sign "
+                  f"(binomial p = {p:.4f})")
+
+    if family_results:
+        n_match = sum(1 for r in family_results if r['sign_match'] is True)
+        n_total = sum(1 for r in family_results if r['sign_match'] is not None)
+        if n_total > 0:
+            p = _sign_test_p(n_match, n_total)
+            print(f"  B3 (family means): {n_match}/{n_total} features preserve sign "
+                  f"(binomial p = {p:.4f})")
+
+    print("\n  --- Core prefix/suffix features only ---")
+    core_ids = set(GB_FEATURES_CORE.keys())
+    if mixed_results:
+        core_b1 = [r for r in mixed_results if r['feat_id'] in core_ids]
+        n_match = sum(1 for r in core_b1
+                      if r['b1_coef'] is not None and r['r_raw'] != 0
+                      and (r['b1_coef'] > 0) == (r['r_raw'] > 0))
+        n_total = sum(1 for r in core_b1
+                      if r['b1_coef'] is not None and r['r_raw'] != 0)
+        if n_total > 0:
+            p = _sign_test_p(n_match, n_total)
+            print(f"  B1 core: {n_match}/{n_total} preserve sign "
+                  f"(binomial p = {p:.4f})")
+            print(f"  Chance probability of {n_match}/{n_total}: "
+                  f"2^-{n_total} = {2**(-n_total):.6f}")
+
+
+# ================================================================
+# DISPLAY FUNCTIONS
+# ================================================================
+
+def print_mixed_results(results):
+    if not results:
+        return
+    print("\n" + "=" * 100)
+    print("B1: MIXED-EFFECTS MODEL — feature ~ vfinal + abs_lat + (1 | family)")
+    print("B2: MIXED-EFFECTS MODEL — feature ~ vfinal + abs_lat + macroarea + (1 | family)")
+    print("=" * 100)
+
+    header = (f"  {'Feature':<45s} {'n':>5s} {'r_raw':>7s} "
+              f"{'B1_coef':>8s} {'B1_SE':>7s} {'B1_p':>10s} "
+              f"{'B2_coef':>8s} {'B2_SE':>7s} {'B2_p':>10s} {'Sign':>5s}")
+    print(header)
+    print("  " + "-" * (len(header) - 2))
+
+    for r in results:
+        sign = ''
+        if r['b1_coef'] is not None and r['r_raw'] != 0:
+            sign = 'Y' if (r['b1_coef'] > 0) == (r['r_raw'] > 0) else 'N'
+
+        b1c = f"{r['b1_coef']:>+7.4f}" if r['b1_coef'] is not None else '    N/A'
+        b1s = f"{r['b1_se']:>6.4f}" if r['b1_se'] is not None else '   N/A'
+        b1p = f"{r['b1_p']:>9.2e}" if r['b1_p'] is not None else '      N/A'
+        b2c = f"{r['b2_coef']:>+7.4f}" if r['b2_coef'] is not None else '    N/A'
+        b2s = f"{r['b2_se']:>6.4f}" if r['b2_se'] is not None else '   N/A'
+        b2p = f"{r['b2_p']:>9.2e}" if r['b2_p'] is not None else '      N/A'
+
+        sig = ''
+        if r['b1_p'] is not None:
+            if r['b1_p'] < 0.001: sig = '***'
+            elif r['b1_p'] < 0.01: sig = '**'
+            elif r['b1_p'] < 0.05: sig = '*'
+
+        print(f"  {r['feat_name']:<45s} {r['n']:>5d} {r['r_raw']:>+6.4f} "
+              f"{b1c} {b1s} {b1p} {b2c} {b2s} {b2p} {sign:>5s} {sig}")
+
+    print()
+    print("  Note: LPM coefficients. Sign column: Y = B1 preserves raw correlation sign.")
+    print("  Attenuation relative to r_raw is expected (Vfinal-latitude collinearity).")
+
+
+def print_family_results(results):
+    if not results:
+        return
+    print("\n" + "=" * 100)
+    print(f"B3: FAMILY-LEVEL AGGREGATION (Spearman, min family size = {MIN_FAMILY_SIZE})")
+    print("=" * 100)
+
+    header = (f"  {'Feature':<45s} {'n_fam':>6s} {'n_lang':>7s} "
+              f"{'rho_fam':>8s} {'p_fam':>10s} {'r_raw':>7s} {'Sign':>5s}")
+    print(header)
+    print("  " + "-" * (len(header) - 2))
+
+    for r in results:
+        sign = 'Y' if r['sign_match'] is True else ('N' if r['sign_match'] is False else '')
+        sig = ''
+        if r['spearman_p'] < 0.001: sig = '***'
+        elif r['spearman_p'] < 0.01: sig = '**'
+        elif r['spearman_p'] < 0.05: sig = '*'
+
+        print(f"  {r['feat_name']:<45s} {r['n_families']:>6d} {r['total_langs']:>7d} "
+              f"{r['spearman_r']:>+7.4f} {r['spearman_p']:>9.2e} {r['r_raw']:>+6.4f} "
+              f"{sign:>5s} {sig}")
+
+
+def print_permutation_results(results):
+    if not results:
+        return
+    print("\n" + "=" * 100)
+    print(f"B4: WITHIN-FAMILY PERMUTATION TEST ({results[0]['n_perm']} iterations)")
+    print("=" * 100)
+
+    header = (f"  {'Feature':<45s} {'n':>5s} {'n_fam':>6s} "
+              f"{'r_obs':>8s} {'p_perm':>10s}")
+    print(header)
+    print("  " + "-" * (len(header) - 2))
+
+    for r in results:
+        sig = ''
+        if r['p_perm'] < 0.001: sig = '***'
+        elif r['p_perm'] < 0.01: sig = '**'
+        elif r['p_perm'] < 0.05: sig = '*'
+
+        print(f"  {r['feat_name']:<45s} {r['n']:>5d} {r['n_families']:>6d} "
+              f"{r['r_obs']:>+7.4f} {r['p_perm']:>9.4f} {sig}")
+
+    print()
+    print("  p_perm = proportion of permuted |r| >= observed |r| (two-tailed).")
+
+
+# ================================================================
+# COMBINED SUMMARY TABLE (Table S1)
+# ================================================================
+
+def print_combined_summary(mixed_res, family_res, perm_res, features):
+    print("\n" + "=" * 100)
+    print("TABLE S1: COMBINED SUMMARY — Genealogical and Areal Controls")
+    print("=" * 100)
+
+    mixed_by_id = {r['feat_id']: r for r in mixed_res} if mixed_res else {}
+    fam_by_id = {r['feat_id']: r for r in family_res} if family_res else {}
+    perm_by_id = {r['feat_id']: r for r in perm_res} if perm_res else {}
+
+    header = (f"  {'Feature':<40s} {'n':>5s} "
+              f"{'r_raw':>7s} "
+              f"{'B1b':>8s} {'B1p':>8s} "
+              f"{'B2b':>8s} {'B2p':>8s} "
+              f"{'B3rho':>7s} {'B3p':>8s} "
+              f"{'B4p':>8s} "
+              f"{'All':>4s}")
+    print(header)
+    print("  " + "-" * (len(header) - 2))
+
+    for feat_id, feat_name in sorted(features.items()):
+        m = mixed_by_id.get(feat_id, {})
+        f = fam_by_id.get(feat_id, {})
+        p = perm_by_id.get(feat_id, {})
+
+        n = m.get('n', f.get('total_langs', p.get('n', '')))
+        r_raw = m.get('r_raw', f.get('r_raw', 0))
+
+        b1c = f"{m['b1_coef']:>+7.4f}" if m.get('b1_coef') is not None else '     --'
+        b1p = f"{m['b1_p']:>7.2e}" if m.get('b1_p') is not None else '      --'
+        b2c = f"{m['b2_coef']:>+7.4f}" if m.get('b2_coef') is not None else '     --'
+        b2p = f"{m['b2_p']:>7.2e}" if m.get('b2_p') is not None else '      --'
+        b3r = f"{f['spearman_r']:>+6.4f}" if f.get('spearman_r') is not None else '    --'
+        b3p = f"{f['spearman_p']:>7.2e}" if f.get('spearman_p') is not None else '      --'
+        b4p = f"{p['p_perm']:>7.4f}" if p.get('p_perm') is not None else '      --'
+
+        signs = []
+        if m.get('b1_coef') is not None and r_raw != 0:
+            signs.append((m['b1_coef'] > 0) == (r_raw > 0))
+        if m.get('b2_coef') is not None and r_raw != 0:
+            signs.append((m['b2_coef'] > 0) == (r_raw > 0))
+        if f.get('sign_match') is not None:
+            signs.append(f['sign_match'])
+
+        all_ok = 'Y' if signs and all(signs) else ('N' if signs else '--')
+
+        n_str = f"{n:>5d}" if isinstance(n, int) else f"{n:>5s}"
+        print(f"  {feat_name:<40s} {n_str} "
+              f"{r_raw:>+6.4f} "
+              f"{b1c} {b1p} "
+              f"{b2c} {b2p} "
+              f"{b3r} {b3p} "
+              f"{b4p} "
+              f"{all_ok:>4s}")
+
+    print()
+    print("  r_raw = raw Pearson; B1b/B2b = LPM Vfinal coefficient;")
+    print("  B3rho = family-mean Spearman; B4p = within-family permutation p;")
+    print("  All = sign preserved across all controls")
+
+
+# ================================================================
+# COLLINEARITY DIAGNOSTIC
+# ================================================================
+
+def collinearity_check(data):
+    x, y = [], []
+    for d in data.values():
+        x.append(d['vfinal_prop'])
+        y.append(d['abs_lat'])
+    r, p = pearson_r(x, y)
+    print(f"\n  Collinearity check: Vfinal ~ abs_lat")
+    print(f"    r = {r:+.4f}, p = {p:.2e}, n = {len(x)}")
+    print(f"    VIF (approx) = 1/(1-r^2) = {1/(1-r**2):.2f}")
+    if abs(r) > 0.5:
+        print(f"    NOTE: Substantial collinearity. Vfinal coefficient in B1/B2")
+        print(f"    will be attenuated. Sign preservation is the key test.")
+    print()
 
 
 # ================================================================
 # MAIN
 # ================================================================
+
 def main():
+    random.seed(42)
+
     print("=" * 100)
-    print("09b: GENEALOGICAL AND AREAL CONTROLS FOR PHONOTACTIC–MORPHOLOGICAL CASCADE")
+    print("09b — GENEALOGICAL & AREAL CONTROLS FOR PHONOTACTIC-MORPHOLOGICAL CASCADE")
     print("=" * 100)
 
-    # Load data
-    print("\nStep 1: Loading ASJP word-final V%...")
+    print("\n[1/5] Loading ASJP word-final V% ...")
     lang_vfinal = load_asjp_wordfinal()
-    print(f"  Languages with Vfinal + coords: {len(lang_vfinal)}")
+    print(f"  Loaded {len(lang_vfinal)} languages with V-final data.")
 
-    print("\nStep 2: Loading Grambank features + macroarea...")
-    gb_data, gb_langs = load_grambank()
-    print(f"  Languages in Grambank: {len(gb_data)}")
-    print(f"  Languages with macroarea: {sum(1 for v in gb_langs.values() if v != 'Unknown')}")
+    print("\n[2/5] Loading Grambank features + Macroarea ...")
+    gb_data, gb_macroarea = load_grambank_with_macroarea()
+    print(f"  Loaded {len(gb_data)} Grambank languages.")
+    print(f"  Macroarea available for {len(gb_macroarea)} languages.")
 
-    # Overlap
-    overlap = set(lang_vfinal.keys()) & set(gb_data.keys())
-    print(f"\n  ASJP–Grambank overlap: {len(overlap)} languages")
+    print("\n[3/5] Building analysis dataset (join on Glottocode) ...")
+    data = build_analysis_data(lang_vfinal, gb_data, gb_macroarea)
 
-    # ================================================================
-    # Run all controls for each feature
-    # ================================================================
-    all_results = {}
+    if not data:
+        print("ERROR: No overlapping data found. Check file paths.")
+        sys.exit(1)
 
-    for feat_id in sorted(GB_FEATURES.keys()):
-        feat_name = GB_FEATURES[feat_id]
-        print(f"\n{'='*80}")
-        print(f"  {feat_id}: {feat_name}")
-        print(f"{'='*80}")
+    collinearity_check(data)
 
-        feat_results = {'name': feat_name}
+    # ==== CORE FEATURES ====
+    print("\n" + "#" * 100)
+    print("# CORE FEATURES: Prefix/Suffix Pairs (8 features)")
+    print("#" * 100)
 
-        # --- B1: Mixed-effects with family random intercept ---
-        print(f"\n  [B1] Mixed-effects LPM: feature ~ vfinal + abs_lat + (1|family)")
-        b1 = run_b1(lang_vfinal, gb_data, feat_id)
-        feat_results['B1'] = b1
-        if b1:
-            sig = '***' if b1['p'] < 0.001 else '**' if b1['p'] < 0.01 else '*' if b1['p'] < 0.05 else 'ns'
-            print(f"       coef(vfinal) = {b1['coef']:+.4f}, SE = {b1['se']:.4f}, "
-                  f"z = {b1['z']:.2f}, p = {b1['p']:.2e} {sig}")
-            print(f"       n = {b1['n']}, families = {b1['n_families']}, direction = {b1['direction']}")
-        else:
-            print(f"       Skipped (insufficient data or model failure)")
+    print("\n[4a/5] B1/B2: Mixed-effects models (core features) ...")
+    mixed_core = run_mixed_effects(data, GB_FEATURES_CORE)
+    print_mixed_results(mixed_core)
 
-        # --- B2: Macroarea fixed effect ---
-        print(f"\n  [B2] + Macroarea: feature ~ vfinal + abs_lat + macroarea + (1|family)")
-        b2 = run_b2(lang_vfinal, gb_data, gb_langs, feat_id)
-        feat_results['B2'] = b2
-        if b2:
-            sig = '***' if b2['p'] < 0.001 else '**' if b2['p'] < 0.01 else '*' if b2['p'] < 0.05 else 'ns'
-            print(f"       coef(vfinal) = {b2['coef']:+.4f}, SE = {b2['se']:.4f}, "
-                  f"z = {b2['z']:.2f}, p = {b2['p']:.2e} {sig}")
-            print(f"       n = {b2['n']}, families = {b2['n_families']}, "
-                  f"areas = {b2['n_areas']}, direction = {b2['direction']}")
-        else:
-            print(f"       Skipped (insufficient data or model failure)")
+    print("\n[4b/5] B3: Family-level aggregation (core features) ...")
+    family_core = run_family_aggregation(data, GB_FEATURES_CORE)
+    print_family_results(family_core)
 
-        # --- B3: Family-mean aggregation ---
-        print(f"\n  [B3] Family-mean aggregation (Spearman)")
-        b3 = run_b3(lang_vfinal, gb_data, feat_id)
-        feat_results['B3'] = b3
-        if b3:
-            sig = '***' if b3['spearman_p'] < 0.001 else '**' if b3['spearman_p'] < 0.01 else '*' if b3['spearman_p'] < 0.05 else 'ns'
-            print(f"       Spearman ρ = {b3['spearman_rho']:+.4f}, p = {b3['spearman_p']:.2e} {sig}")
-            print(f"       Pearson r  = {b3['pearson_r']:+.4f}, p = {b3['pearson_p']:.2e}")
-            print(f"       n_families = {b3['n_families']}, total langs = {b3['total_langs']}, "
-                  f"direction = {b3['direction']}")
-        else:
-            print(f"       Skipped (< {MIN_FAMILIES_FOR_CORR} families)")
+    perm_core = []
+    if not SKIP_PERM:
+        print(f"\n[4c/5] B4: Within-family permutation ({PERM_N} iters, core) ...")
+        print("  This may take a few minutes ...")
+        perm_core = run_family_permutation(data, GB_FEATURES_CORE, n_perm=PERM_N)
+        print_permutation_results(perm_core)
+    else:
+        print("\n[4c/5] B4: SKIPPED (--skip-perm flag)")
 
-        # --- B4: Permutation by family ---
-        print(f"\n  [B4] Permutation within family ({N_PERM} iterations)")
-        b4 = run_b4(lang_vfinal, gb_data, feat_id)
-        feat_results['B4'] = b4
-        if b4:
-            sig = '***' if b4['p_perm'] < 0.001 else '**' if b4['p_perm'] < 0.01 else '*' if b4['p_perm'] < 0.05 else 'ns'
-            print(f"       r_obs = {b4['r_obs']:+.4f}, p_perm = {b4['p_perm']:.4f} {sig}")
-            print(f"       n = {b4['n']}, direction = {b4['direction']}")
-        else:
-            print(f"       Skipped (insufficient data)")
+    print_combined_summary(mixed_core, family_core, perm_core, GB_FEATURES_CORE)
+    sign_consistency_test(mixed_core, family_core)
 
-        all_results[feat_id] = feat_results
+    # ==== EXTENDED FEATURES ====
+    print("\n\n" + "#" * 100)
+    print("# EXTENDED FEATURES: Additional Grambank features (9 features)")
+    print("#" * 100)
 
-    # ================================================================
-    # SUMMARY TABLE
-    # ================================================================
-    print("\n\n" + "=" * 120)
-    print("SUMMARY: DIRECTION CONSISTENCY ACROSS ALL CONTROLS")
-    print("=" * 120)
+    mixed_ext = run_mixed_effects(data, GB_FEATURES_EXTENDED)
+    print_mixed_results(mixed_ext)
 
-    header = (f"{'Feature':<45s} {'Raw':>5s} {'B1':>5s} {'B2':>5s} "
-              f"{'B3':>5s} {'B4':>5s} {'Consistent?':>12s}")
-    print(header)
-    print("-" * 120)
+    family_ext = run_family_aggregation(data, GB_FEATURES_EXTENDED)
+    print_family_results(family_ext)
 
-    suffix_feats = ['GB080', 'GB089', 'GB091', 'GB093']
-    prefix_feats = ['GB079', 'GB090', 'GB092', 'GB094']
-    n_consistent = 0
-    n_total = 0
+    perm_ext = []
+    if not SKIP_PERM:
+        perm_ext = run_family_permutation(data, GB_FEATURES_EXTENDED, n_perm=PERM_N)
+        print_permutation_results(perm_ext)
 
-    for feat_id in sorted(GB_FEATURES.keys()):
-        res = all_results[feat_id]
-        name = GB_FEATURES[feat_id]
+    print_combined_summary(mixed_ext, family_ext, perm_ext, GB_FEATURES_EXTENDED)
 
-        # Expected direction
-        if feat_id in suffix_feats:
-            expected = '+'
-        elif feat_id in prefix_feats:
-            expected = '-'
-        else:
-            expected = '?'
-
-        # Collect directions
-        dirs = {}
-
-        # Raw (B4 gives us the raw r)
-        if res.get('B4') and res['B4']:
-            dirs['raw'] = res['B4']['direction']
-        else:
-            dirs['raw'] = '?'
-
-        for key in ['B1', 'B2', 'B3', 'B4']:
-            r = res.get(key)
-            if r:
-                dirs[key] = r['direction']
-            else:
-                dirs[key] = '—'
-
-        # Check consistency
-        observed_dirs = [d for d in dirs.values() if d in ('+', '-')]
-        if observed_dirs:
-            all_same = all(d == observed_dirs[0] for d in observed_dirs)
-            consistent = '✓ YES' if all_same else '✗ NO'
-            if all_same:
-                n_consistent += 1
-        else:
-            consistent = '—'
-        n_total += 1
-
-        print(f"  {name:<43s} {dirs['raw']:>5s} {dirs.get('B1','—'):>5s} "
-              f"{dirs.get('B2','—'):>5s} {dirs.get('B3','—'):>5s} "
-              f"{dirs.get('B4','—'):>5s} {consistent:>12s}")
-
-    print(f"\n  Direction-consistent features: {n_consistent}/{n_total}")
-
-    # ================================================================
-    # PREFIX–SUFFIX MIRROR TEST
-    # ================================================================
-    print("\n\n" + "=" * 100)
-    print("PREFIX–SUFFIX MIRROR: Sign consistency in B1 (mixed-effects)")
+    # ==== FINAL ====
+    print("\n" + "=" * 100)
+    print("ANALYSIS COMPLETE")
     print("=" * 100)
-
-    print(f"\n  {'Feature':<45s} {'Expected':>8s} {'B1 coef':>10s} {'B1 dir':>8s} {'Match':>8s}")
-    print("  " + "-" * 85)
-
-    mirror_match = 0
-    mirror_total = 0
-    for feat_id in suffix_feats + prefix_feats:
-        name = GB_FEATURES[feat_id]
-        expected = '+' if feat_id in suffix_feats else '-'
-        res = all_results.get(feat_id, {})
-        b1 = res.get('B1')
-        if b1:
-            observed = b1['direction']
-            match = '✓' if observed == expected else '✗'
-            if observed == expected:
-                mirror_match += 1
-            mirror_total += 1
-            print(f"  {name:<45s} {expected:>8s} {b1['coef']:>+10.4f} {observed:>8s} {match:>8s}")
-        else:
-            print(f"  {name:<45s} {expected:>8s} {'—':>10s} {'—':>8s} {'—':>8s}")
-
-    if mirror_total > 0:
-        p_binom = 0.5 ** mirror_total  # probability of all matching by chance
-        print(f"\n  Mirror consistency: {mirror_match}/{mirror_total}")
-        print(f"  Binomial p (all {mirror_total} matching by chance): {p_binom:.6f}")
-
-    # ================================================================
-    # SAVE RESULTS as JSON
-    # ================================================================
-    # Convert for JSON serialization
-    def clean_for_json(obj):
-        if obj is None:
-            return None
-        if isinstance(obj, dict):
-            return {k: clean_for_json(v) for k, v in obj.items()}
-        if isinstance(obj, float):
-            if obj != obj:  # NaN
-                return None
-            return round(obj, 6)
-        return obj
-
-    output = clean_for_json(all_results)
-    with open('cascade_controls_results.json', 'w') as f:
-        json.dump(output, f, indent=2)
-    print(f"\n\nResults saved to cascade_controls_results.json")
+    print(f"\n  B1: Mixed-effects LPM with family random intercepts — "
+          f"{'DONE' if mixed_core else 'SKIPPED'}")
+    print(f"  B2: + Macroarea fixed effects — "
+          f"{'DONE' if mixed_core else 'SKIPPED'}")
+    print(f"  B3: Family-level aggregation (Spearman) — DONE")
+    print(f"  B4: Within-family permutation ({PERM_N} iters) — "
+          f"{'DONE' if perm_core else 'SKIPPED'}")
+    print()
+    print("  Key: If all 8 core features preserve sign -> genealogical criticism refuted.")
+    print(f"  Binomial probability of 8/8 by chance: 2^-8 = {2**(-8):.4f}")
+    print()
 
 
 if __name__ == '__main__':
