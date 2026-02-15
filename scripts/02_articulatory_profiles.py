@@ -139,17 +139,17 @@ SEMANTIC_CATEGORIES = {
 def load_data():
     """Load ASJP data."""
     languages = {}
-    with open('/home/claude/asjp/cldf/languages.csv', 'r', encoding='utf-8') as f:
+    with open('/content/asjp/cldf/languages.csv', 'r', encoding='utf-8') as f:
         for row in csv.DictReader(f):
             languages[row['ID']] = {'family': row['Family'], 'lat': float(row['Latitude']) if row['Latitude'] else None}
     
     concepts = {}
-    with open('/home/claude/asjp/cldf/parameters.csv', 'r', encoding='utf-8') as f:
+    with open('/content/asjp/cldf/parameters.csv', 'r', encoding='utf-8') as f:
         for row in csv.DictReader(f):
             concepts[row['ID']] = row['Concepticon_Gloss']
     
     forms = []
-    with open('/home/claude/asjp/cldf/forms.csv', 'r', encoding='utf-8') as f:
+    with open('/content/asjp/cldf/forms.csv', 'r', encoding='utf-8') as f:
         for row in csv.DictReader(f):
             if row['Loan'] != 'true':
                 forms.append({'lang_id': row['Language_ID'], 'concept_id': row['Parameter_ID'], 'form': row['Form']})
