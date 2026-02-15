@@ -26,7 +26,7 @@ VOWELS = set('ieE3auo')
 def load_asjp_wordfinal():
     """Compute word-final vowel % for each ASJP language."""
     languages = {}
-    with open('/home/claude/asjp/cldf/languages.csv', 'r', encoding='utf-8') as f:
+    with open('/content/asjp/cldf/languages.csv', 'r', encoding='utf-8') as f:
         for row in csv.DictReader(f):
             languages[row['ID']] = {
                 'glottocode': row.get('Glottocode', ''),
@@ -37,7 +37,7 @@ def load_asjp_wordfinal():
     
     lang_finals = defaultdict(lambda: {'v': 0, 'c': 0})
     
-    with open('/home/claude/asjp/cldf/forms.csv', 'r', encoding='utf-8') as f:
+    with open('/content/asjp/cldf/forms.csv', 'r', encoding='utf-8') as f:
         for row in csv.DictReader(f):
             if row.get('Loan') == 'true':
                 continue
@@ -79,7 +79,7 @@ def load_wals():
     """Load WALS values for key features, indexed by Glottocode."""
     # Languages
     wals_langs = {}
-    with open('/home/claude/wals/cldf/languages.csv', 'r', encoding='utf-8') as f:
+    with open('/content/wals/cldf/languages.csv', 'r', encoding='utf-8') as f:
         for row in csv.DictReader(f):
             gc = row.get('Glottocode', '')
             if gc:
@@ -87,7 +87,7 @@ def load_wals():
     
     # Values
     wals_data = defaultdict(dict)  # glottocode -> {feature_id: value}
-    with open('/home/claude/wals/cldf/values.csv', 'r', encoding='utf-8') as f:
+    with open('/content/wals/cldf/values.csv', 'r', encoding='utf-8') as f:
         for row in csv.DictReader(f):
             lang_id = row['Language_ID']
             gc = wals_langs.get(lang_id, '')
@@ -107,7 +107,7 @@ def load_wals():
 def load_grambank():
     """Load Grambank values for key features, indexed by Glottocode."""
     gb_data = defaultdict(dict)
-    with open('/home/claude/grambank/cldf/values.csv', 'r', encoding='utf-8') as f:
+    with open('/content/grambank/cldf/values.csv', 'r', encoding='utf-8') as f:
         for row in csv.DictReader(f):
             gc = row['Language_ID']  # Grambank uses Glottocodes as Language_ID
             feat = row['Parameter_ID']
