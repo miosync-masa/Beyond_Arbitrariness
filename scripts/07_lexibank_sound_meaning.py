@@ -202,7 +202,7 @@ def main():
     
     # Load languages
     languages = {}
-    with open('/home/claude/lexibank-analysed/cldf/languages.csv', 'r', encoding='utf-8') as f:
+    with open('/content/lexibank-analysed/cldf/languages.csv', 'r', encoding='utf-8') as f:
         for row in csv.DictReader(f):
             lat = float(row['Latitude']) if row['Latitude'] else None
             languages[row['ID']] = {
@@ -213,7 +213,7 @@ def main():
     
     # Load concepts (map to Concepticon glosses)
     concepts = {}
-    with open('/home/claude/lexibank-analysed/cldf/concepts.csv', 'r', encoding='utf-8') as f:
+    with open('/content/lexibank-analysed/cldf/concepts.csv', 'r', encoding='utf-8') as f:
         for row in csv.DictReader(f):
             cgloss = row.get('Concepticon_Gloss', '')
             if cgloss:
@@ -236,7 +236,7 @@ def main():
     total_forms = 0
     matched_forms = 0
     
-    with open('/home/claude/lexibank-analysed/cldf/forms.csv', 'r', encoding='utf-8') as f:
+    with open('/content/lexibank-analysed/cldf/forms.csv', 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
             total_forms += 1
