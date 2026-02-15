@@ -49,7 +49,7 @@ def main():
     
     # Load languages with latitude
     languages = {}
-    with open('/home/claude/lexibank-analysed/cldf/languages.csv', 'r', encoding='utf-8') as f:
+    with open('/content/lexibank-analysed/cldf/languages.csv', 'r', encoding='utf-8') as f:
         for row in csv.DictReader(f):
             lat = float(row['Latitude']) if row['Latitude'] else None
             languages[row['ID']] = {
@@ -79,7 +79,7 @@ def main():
     total = 0
     matched = 0
     
-    with open('/home/claude/lexibank-analysed/cldf/forms.csv', 'r', encoding='utf-8') as f:
+    with open('/content/lexibank-analysed/cldf/forms.csv', 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
             total += 1
