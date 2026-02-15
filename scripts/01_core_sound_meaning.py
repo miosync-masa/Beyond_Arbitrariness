@@ -84,7 +84,7 @@ def load_data():
     """Load ASJP data from CLDF format."""
     print("Loading language data...")
     languages = {}
-    with open('/home/claude/asjp/cldf/languages.csv', 'r', encoding='utf-8') as f:
+    with open('/content/asjp/cldf/languages.csv', 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
             languages[row['ID']] = {
@@ -103,7 +103,7 @@ def load_data():
     
     print("Loading concept parameters...")
     concepts = {}
-    with open('/home/claude/asjp/cldf/parameters.csv', 'r', encoding='utf-8') as f:
+    with open('/content/asjp/cldf/parameters.csv', 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
             concepts[row['ID']] = {
@@ -115,7 +115,7 @@ def load_data():
     
     print("Loading word forms (this may take a moment)...")
     forms = []
-    with open('/home/claude/asjp/cldf/forms.csv', 'r', encoding='utf-8') as f:
+    with open('/content/asjp/cldf/forms.csv', 'r', encoding='utf-8') as f:
         reader = csv.DictReader(f)
         for row in reader:
             if row['Loan'] == 'true':  # Skip loanwords
