@@ -104,9 +104,3 @@ No external packages required.
 ## Citation
 
 [To be added upon publication]
-
----
-
-*Differentiation is necessary. Separation is not.*
-
-— M. Iizumi
