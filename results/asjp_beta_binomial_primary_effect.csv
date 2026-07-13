@@ -1,0 +1,2 @@
+model,parameter,mean,median,ci_2.5,ci_97.5,p_lt_0,p_gt_0,odds_ratio_per_1sd
+ASJP Beta-Binomial primary,beta_lat,-0.15060880413782524,-0.150880511295931,-0.19542037747195684,-0.10501097457847257,1.0,0.0,0.859950446884919

@@ -1,0 +1,2 @@
+model,max_rhat,min_ess_bulk,min_ess_tail,divergences
+Lexibank replication,1.09,37.0,343.0,0

@@ -1,0 +1,10 @@
+model,max_rhat,min_ess_bulk,min_ess_tail,divergences
+ASJP primary final,1.01,308.0,623.0,0
+ASJP hemisphere interaction,1.02,252.0,407.0,0
+ASJP within/between family,1.01,218.0,524.0,0
+ASJP macroarea control,1.01,261.0,672.0,0
+ASJP initial-vs-final interaction,1.0,1666.0,3272.0,0
+ASJP North only,1.01,386.0,900.0,0
+ASJP South only,1.01,391.0,1064.0,0
+Lexibank final replication,1.01,215.0,396.0,0
+ASJP South macroarea-specific slopes,1.01,751.0,1659.0,0

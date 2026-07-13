@@ -1,0 +1,3 @@
+model,parameter,mean,median,ci_2.5,ci_97.5,p_lt_0,p_gt_0,n_languages,n_families,macroarea_adjusted,odds_ratio_per_1sd,attenuation_relative_to_no_macro
+ASJP BB matched sample without macroarea,beta_lat,-0.13721704578163213,-0.13772309187127096,-0.18281564128598346,-0.09162474164267957,1.0,0.0,10626,386,False,0.8713399394546523,
+ASJP BB matched sample with macroarea,beta_lat,-0.0718172662845177,-0.07166259129505512,-0.12294850496743616,-0.02130227870233856,0.9969,0.0031,10626,386,True,0.9308449180096051,0.4796617595396583

@@ -1,0 +1,2 @@
+macroarea_source_type,macroarea_source_path,macroarea_source_column,left_merge_table,left_merge_key,right_source_table,right_original_key,right_key_after_rename,merge_type_for_model,minimum_concepts,source_rows,source_unique_language_ids,complete_macroarea_language_ids,duplicate_language_id_rows
+ASJP languages.csv column,/content/beyond_arbitrariness_paper1/asjp/cldf/languages.csv,Macroarea,asjp_lang_bb,Language_ID,ASJP cldf/languages.csv,ID,Language_ID,inner,20,11540,11540,11115,0

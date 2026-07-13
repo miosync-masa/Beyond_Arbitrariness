@@ -1,0 +1,4 @@
+model,parameter,mean,median,ci_2.5,ci_97.5,p_lt_0,p_gt_0,excluded_families
+ASJP BB initial slope excluding top two boundary families,beta_lat_initial,0.02617640096264953,0.02616841283471332,-0.01707460671364572,0.06797876468429795,0.1154,0.8846,Atlantic-Congo; Austronesian
+ASJP BB final slope excluding top two boundary families,beta_lat_final,-0.21586683887974453,-0.21575701752474613,-0.25501710100536196,-0.17711034557469807,1.0,0.0,Atlantic-Congo; Austronesian
+ASJP BB final-minus-initial excluding top two boundary families,beta_lat_final_delta,-0.2420432398423941,-0.24216859064286578,-0.2757190317970704,-0.20794825443267465,1.0,0.0,Atlantic-Congo; Austronesian

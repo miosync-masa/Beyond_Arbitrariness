@@ -1,0 +1,6 @@
+model,max_rhat,min_ess_bulk,min_ess_tail,divergences
+ASJP Beta-Binomial primary,1.0,2062.0,4128.0,0
+ASJP Beta-Binomial within/between,1.0,1357.0,2504.0,0
+ASJP Beta-Binomial initial-vs-final,1.0,562.0,990.0,0
+ASJP Beta-Binomial hemisphere,1.01,1428.0,3375.0,0
+Lexibank Beta-Binomial replication,1.0,2593.0,4694.0,0

@@ -1,0 +1,2 @@
+model,max_rhat,min_ess_bulk,min_ess_tail,divergences
+ASJP BB matched sample without macroarea,1.0,2056.0,3699.0,0

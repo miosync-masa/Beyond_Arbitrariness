@@ -1,0 +1,2 @@
+model,parameter,mean,median,ci_2.5,ci_97.5,p_lt_0,p_gt_0,odds_ratio_per_1sd
+Lexibank final replication,beta_lat,-0.0685720380493027,-0.06861247852079788,-0.07685259819514859,-0.06011397590596472,1.0,0.0,0.9336884343030837

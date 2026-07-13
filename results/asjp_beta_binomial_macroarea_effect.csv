@@ -1,0 +1,2 @@
+model,parameter,mean,median,ci_2.5,ci_97.5,p_lt_0,p_gt_0,odds_ratio_per_1sd,n_languages,n_families,n_macroareas
+ASJP BB latitude after family + macroarea,beta_lat,-0.0718172662845177,-0.07166259129505512,-0.12294850496743616,-0.02130227870233856,0.9969,0.0031,0.9308449180096051,10626,386,6

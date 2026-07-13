@@ -1,0 +1,11 @@
+model,parameter,mean,median,ci_2.5,ci_97.5,p_lt_0,p_gt_0,display_label
+"ASJP word-final, primary",beta_lat,-0.15060880413782524,-0.150880511295931,-0.19542037747195684,-0.10501097457847257,1.0,0.0,"ASJP word-final
+primary"
+"Lexibank word-final, replication",beta_lat,-0.13825022259974432,-0.13869478527093976,-0.21054084476044516,-0.06254006777672805,0.9998,0.0002,"Lexibank word-final
+replication"
+ASJP word-initial,beta_lat_initial,0.028499126132333588,0.028521654356702134,-0.005330811071385629,0.0628011292449853,0.0482,0.9518,ASJP word-initial
+"ASJP word-final, positional model",beta_lat_final,-0.28470984251294057,-0.2849887722500779,-0.31627559730260935,-0.25206147209706753,1.0,0.0,"ASJP word-final
+positional model"
+ASJP final minus initial,beta_lat_final_delta,-0.31320896864527414,-0.31319108536408996,-0.34230473248502985,-0.28407952065787573,1.0,0.0,Final − initial
+Final minus initial excluding top two families,beta_lat_final_delta,-0.2420432398423941,-0.24216859064286578,-0.2757190317970704,-0.20794825443267465,1.0,0.0,"Final − initial
+excluding top two families"

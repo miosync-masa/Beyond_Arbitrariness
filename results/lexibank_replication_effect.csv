@@ -1,0 +1,2 @@
+model,parameter,mean,median,ci_2.5,ci_97.5,p_lt_0,p_gt_0,odds_ratio_per_1sd
+Lexibank latitude slope,beta_lat,-0.06843945084569548,-0.06845604908121258,-0.07677213299068728,-0.06006036153090375,1.0,0.0,0.9338345020859619

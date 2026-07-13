@@ -1,0 +1,9 @@
+{
+  "created_utc": "2026-07-13T01:19:46.910643+00:00",
+  "seed": 20260711,
+  "backend": "gpu",
+  "device": "cuda:0",
+  "repo_sha": "d3ef7a8246f2329114cfa0440c5b380caeca5fee",
+  "asjp_sha": "012795349540ba0dabfdcf2be16f2e77622f62d6",
+  "lexibank_sha": "edf5f028de7eabdabe0998a4a831e5e7dca79117"
+}

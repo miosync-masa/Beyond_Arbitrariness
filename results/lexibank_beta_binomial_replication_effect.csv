@@ -1,0 +1,2 @@
+model,parameter,mean,median,ci_2.5,ci_97.5,p_lt_0,p_gt_0,odds_ratio_per_1sd
+Lexibank Beta-Binomial replication,beta_lat,-0.13825022259974432,-0.13869478527093976,-0.21054084476044516,-0.06254006777672805,0.9998,0.0002,0.8704936754077968

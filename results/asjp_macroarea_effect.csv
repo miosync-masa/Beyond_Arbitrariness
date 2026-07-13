@@ -1,0 +1,2 @@
+model,parameter,mean,median,ci_2.5,ci_97.5,p_lt_0,p_gt_0
+Latitude after family + macroarea,beta_lat,-0.16739080107888799,-0.16741394599961784,-0.18184681545868556,-0.15281455387726012,1.0,0.0

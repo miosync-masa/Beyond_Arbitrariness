@@ -1,0 +1,2 @@
+model,max_rhat,min_ess_bulk,min_ess_tail,divergences
+ASJP hemisphere interaction,1.02,252.0,407.0,0

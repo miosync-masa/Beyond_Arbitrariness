@@ -1,0 +1,4 @@
+stage,n_languages,n_families,n_unknown_or_isolate_languages
+ASJP language summary before primary filter,11393,667,278
+Primary complete-case sample (n_concepts >= 20),10886,646,260
+Macroarea complete-case sample,10626,386,0
