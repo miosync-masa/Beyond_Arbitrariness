@@ -1,0 +1,93 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Manuscript contract for Beyond Arbitrariness SI",
+  "type": "object",
+  "required": [
+    "direct_manuscript_source_validation",
+    "tolerances_by_kind",
+    "checkpoints"
+  ],
+  "properties": {
+    "direct_manuscript_source_validation": {
+      "type": "string"
+    },
+    "tolerances_by_kind": {
+      "type": "object"
+    },
+    "checkpoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "label",
+          "kind",
+          "layer",
+          "csv_source",
+          "authoritative_value_from_csv"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "count",
+              "coefficient",
+              "share",
+              "percentage",
+              "fraction_pct"
+            ]
+          },
+          "layer": {
+            "type": "string",
+            "enum": [
+              "manuscript_s5",
+              "repo_internal"
+            ]
+          },
+          "manuscript_declared": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "authoritative_value_from_csv": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "csv_source": {
+            "type": "object",
+            "required": [
+              "file",
+              "field"
+            ],
+            "properties": {
+              "file": {
+                "type": "string"
+              },
+              "field": {
+                "type": "string"
+              },
+              "match": {
+                "type": "object"
+              },
+              "row_index": {
+                "type": "integer"
+              }
+            }
+          },
+          "note": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

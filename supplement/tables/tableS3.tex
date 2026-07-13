@@ -1,0 +1,18 @@
+\begin{table}[htbp]\centering
+\footnotesize
+\caption{ASJP sample flow.}
+\label{tab:s3}
+\resizebox{\ifdim\width>\linewidth \linewidth\else\width\fi}{!}{%
+\begin{tabular}{p{0.44\textwidth} r r r}
+\toprule
+Stage & Languages & Family ids & Isolate/unknown \\
+\midrule
+ASJP language summary before primary filter & 11,393 & 667 & 278 \\
+Primary complete-case sample (n\_concepts >= 20) & 10,886 & 646 & 260 \\
+Macroarea complete-case sample & 10,626 & 386 & 0 \\
+\bottomrule
+\end{tabular}
+}
+
+\par\smallskip{\footnotesize\emph{Note.} 507 languages were removed by the 20-concept inclusion threshold (11{,}393 $\rightarrow$ 10{,}886). A further 260 languages could not be linked under the identifier used for the macroarea table; these are NOT missing-macroarea cases -- all 260 are isolate/unknown languages with unique family identifiers (full ledger: \texttt{asjp\_macroarea\_dropped\_languages.csv}).}
+\end{table}

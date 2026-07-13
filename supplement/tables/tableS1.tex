@@ -1,0 +1,24 @@
+\begin{table}[htbp]\centering
+\footnotesize
+\caption{Database provenance and preprocessing summary.}
+\label{tab:s1}
+\resizebox{\ifdim\width>\linewidth \linewidth\else\width\fi}{!}{%
+\begin{tabular}{p{0.30\textwidth} p{0.32\textwidth} p{0.30\textwidth}}
+\toprule
+Attribute & ASJP & Lexibank \\
+\midrule
+Version / commit SHA & ASJP (CLDF), SHA \texttt{012795349540} & Lexibank-analysed, SHA \texttt{edf5f028de7e} \\
+Raw forms (pre-exclusion) & not recorded in committed CSVs & not recorded in committed CSVs \\
+Retained word tokens & 560,372 & 1,740,092 \\
+Pre-filter language summaries & 11,393 & 5,501 \\
+Inferential languages & 10,886 & 5,501 \\
+Family identifiers (primary) & 646 & 298 \\
+Transcription system & ASJPcode (41 symbols) & IPA segments (CLTS) \\
+Coordinate source & ASJP \texttt{languages.csv} Lat/Long & Lexibank CLDF Lat/Long \\
+Family source & ASJP CLDF classification & Glottolog \texttt{Family} ($\rightarrow$ \texttt{Family\_in\_Data}) \\
+\bottomrule
+\end{tabular}
+}
+
+\par\smallskip{\footnotesize\emph{Note.} Retained word tokens are summed from the family-count CSVs; raw pre-exclusion form totals are not stored in the committed Result CSVs. Family-identifier counts are the primary inferential sample (isolate/unknown languages carry unique identifiers).}
+\end{table}

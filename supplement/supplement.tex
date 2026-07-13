@@ -1,0 +1,271 @@
+%% Supplementary Information for
+%% "Beyond Arbitrariness: Detecting Geographic Structure -- and the Limits of
+%%  Current Linguistic Databases"
+%%
+%% Target journal: Language Sciences (Elsevier).
+%% Build: latexmk -pdf supplement.tex   (see scripts/compile_supplement.sh)
+%% All tables and figures are generated from Result CSV files by the scripts in
+%% supplement/scripts/. This file is an audit/reproducibility layer only; it
+%% introduces no new estimates, models, or interpretations.
+\documentclass[preprint,12pt]{elsarticle}
+
+\usepackage{lmodern}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{booktabs}
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{url}
+\usepackage{microtype}
+\setlength{\emergencystretch}{2em}
+\sloppy
+
+% number SI tables/figures as S1, S2, ...
+\renewcommand{\thetable}{S\arabic{table}}
+\renewcommand{\thefigure}{S\arabic{figure}}
+\renewcommand{\thesection}{S\arabic{section}}
+
+\journal{Language Sciences}
+
+\begin{document}
+
+\begin{frontmatter}
+\title{Supplementary Information\\
+\emph{Beyond Arbitrariness: Detecting Geographic Structure --- and the Limits of
+Current Linguistic Databases}}
+\author{Author list omitted for anonymised review}
+\begin{abstract}
+This Supplementary Information is an audit and reproducibility layer for the main
+manuscript. Every publication-facing quantity is traceable from the manuscript to
+an SI table or figure, from that table or figure to a Result CSV, and from the CSV
+to the exact notebook or Python code that generated it. All numerical values are
+derived programmatically from the Result CSV files; no value is transcribed from
+the manuscript, notebook display output, or PDF. The reported models are
+Beta-Binomial hierarchical regressions; the earlier Binomial fits are retained
+only as a superseded sensitivity layer. The expensive H100/GPU posterior models
+were \emph{not} rerun to build this SI. Throughout, we distinguish word-final vowel
+occurrence (measured directly) from open-syllable structure (a plausible
+typological correlate), and treat latitude as a composite geographic coordinate
+rather than a causal exposure.
+\end{abstract}
+\end{frontmatter}
+
+\tableofcontents
+\clearpage
+
+% ============================================================
+\section{Data provenance and preprocessing}
+% ============================================================
+The two independently assembled databases have partially overlapping language
+coverage. Loan forms are excluded (ASJP \texttt{Loan == "true"}; Lexibank
+\texttt{Loan} $\in \{$\texttt{true},\texttt{1}$\}$); languages require valid
+coordinates and a family identifier and must meet a minimum of 20 concepts.
+Word-initial and word-final vowel occurrence are extracted per form and aggregated
+to the language level. Table~\ref{tab:s1} summarises provenance; Table~\ref{tab:s2}
+gives the segment and vowel classification rules, taken verbatim from the notebook
+code.
+
+\input{tables/tableS1}
+\input{tables/tableS2}
+\clearpage
+
+% ============================================================
+\section{Sample flow and metadata audits}
+% ============================================================
+Table~\ref{tab:s3} traces the ASJP sample from the full language summary to the
+primary inferential sample and the macroarea-linked subset. 507 languages are
+removed by the 20-concept inclusion threshold. A further 260 languages could not
+be linked under the identifier used for the macroarea table; these are not
+missing-macroarea cases --- all 260 are isolate/unknown languages carrying unique
+family identifiers. Table~\ref{tab:s4} gives the macroarea composition and
+Table~\ref{tab:s5} the linkage audit summary; the complete 260-language ledger is
+retained in the repository as \texttt{asjp\_macroarea\_dropped\_languages.csv}.
+
+\input{tables/tableS3}
+\input{tables/tableS4}
+\input{tables/tableS5}
+\clearpage
+
+% ============================================================
+\section{Statistical model specifications}
+% ============================================================
+The reported models are hierarchical Beta-Binomial regressions of the language-level
+count of word-final vowels out of total forms. The linear predictor is
+$\eta = \alpha + \beta_{\mathrm{lat}}\,z_{\mathrm{lat}} +
+\sigma_{\mathrm{family}}\,z_{\mathrm{family}[i]}$, with a Beta-Binomial observation
+model $y \sim \mathrm{BetaBinomial}(n,\ \mu\phi,\ (1-\mu)\phi)$,
+$\mu = \mathrm{logit}^{-1}\eta$. Family random intercepts condition on family-level
+clustering; they are not full phylogenetic control. The positional model adds
+language-level intercepts, and the initial--final contrast is a within-language
+comparison. Latitude is the absolute value of the coordinate, z-scored with
+population standard deviation; it is a composite geographic coordinate, not a
+causal exposure. Priors are read directly from the code (Table~\ref{tab:s6}), not
+inferred from posteriors. The full model inventory spans the primary model, the
+Lexibank replication, the joint initial--final positional model, the
+within/between-family decomposition, the matched-sample family-only and
+family-plus-macroarea models, the hemisphere-interaction and Southern-Hemisphere
+macroarea-specific models, the leave-family-out and leave-top-two positional
+re-fits, and the superseded Binomial sensitivity layer.
+
+\input{tables/tableS6}
+\clearpage
+
+% ============================================================
+\section{MCMC sampling diagnostics}
+% ============================================================
+All reported Beta-Binomial models used NUTS with target acceptance 0.99,
+maximum tree depth 12, 2000 warm-up and 2500 post-warm-up draws per chain across
+4 chains. Table~\ref{tab:s7} reports convergence for every publication-facing
+model; all show $\hat{R} \le 1.01$ and zero divergences.
+
+\input{tables/tableS7}
+\clearpage
+
+% ============================================================
+\section{Binomial versus Beta-Binomial sensitivity}
+% ============================================================
+The Binomial fits are retained only as a superseded sensitivity layer.
+Table~\ref{tab:s8} pairs the two likelihoods; Figure~\ref{fig:s2} compares their
+posterior predictive behaviour on three summary statistics. The Binomial recovers
+the overall mean but underestimates between-language dispersion; the Beta-Binomial
+substantially improves dispersion. Both still underpredict the exact-one boundary
+mass --- the Beta-Binomial does not perfectly fit the full distribution. Because no
+per-bin Binomial predictive output was stored, Figure~\ref{fig:s2} compares summary
+statistics only and does not reconstruct a distribution from summaries.
+
+\input{tables/tableS8}
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=\textwidth]{figures/figureS2_binomial_vs_betabinomial_ppc.pdf}
+\caption{Binomial versus Beta-Binomial posterior predictive comparison for ASJP and
+Lexibank. Bars show the observed value, the Binomial posterior predictive median,
+and the Beta-Binomial posterior predictive median (error bars: 95\% predictive
+interval) for the overall mean language rate, the between-language dispersion
+(standard deviation), and the exact-one boundary share. The overall mean is
+recovered by both likelihoods; the Binomial underestimates dispersion while the
+Beta-Binomial recovers it; both underpredict the exact-one boundary share, the
+Beta-Binomial less severely. Source: \texttt{figures/figureS2\_source.csv}.}
+\label{fig:s2}
+\end{figure}
+\clearpage
+
+% ============================================================
+\section{Lexical-coverage robustness}
+% ============================================================
+The upper-boundary concentration is not merely a sparse-wordlist artifact. The
+robustness sweep in Table~\ref{tab:s9} and Figure~\ref{fig:s3} varies the minimum
+\emph{total word count} (not the concept count); the inferential inclusion criterion
+throughout the paper is a fixed minimum of 20 concepts. Boundary mass consistent
+with boundary inflation or unresolved mixture structure persists across thresholds.
+This does not identify a typological class.
+
+\input{tables/tableS9}
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=\textwidth]{figures/figureS3_boundary_mass_coverage.pdf}
+\caption{Boundary mass across coverage thresholds for ASJP and Lexibank. Each panel
+plots the share of languages with word-final vowel rate exactly $1.00$, at least
+$0.99$, and at least $0.95$, against the minimum total word count. The inferential
+inclusion criterion is a fixed minimum of 20 concepts; this figure varies only the
+minimum total word count. Source: \texttt{figures/figureS3\_source.csv}.}
+\label{fig:s3}
+\end{figure}
+\clearpage
+
+% ============================================================
+\section{Influence of major language families}
+% ============================================================
+The global latitude coefficient is a composite summary. Atlantic-Congo strengthens
+the negative global slope, whereas Austronesian partly counteracts or suppresses it;
+the two largest families do not contribute in the same direction (Table~\ref{tab:s10}).
+Removing both does not eliminate final-position specificity: the final-minus-initial
+contrast remains clearly negative (Table~\ref{tab:s11}). The association is not
+genealogy-free.
+
+\input{tables/tableS10}
+\input{tables/tableS11}
+\clearpage
+
+% ============================================================
+\section{Family-level boundary concentration and PPC misfit}
+% ============================================================
+Boundary concentration and model misfit are distinct. Atlantic-Congo dominates the
+exact-one boundary in both databases (Table~\ref{tab:s12}), but its misfit is
+database-dependent; Austronesian and Nuclear Trans New Guinea show reproducible
+underprediction across both databases (Table~\ref{tab:s13} and Figure~\ref{fig:s1}).
+An exact-one excess is not proof of a discrete open-syllable class. The ASJP
+\texttt{Bookkeeping} label is a Glottolog non-genealogical node; it is excluded from
+the interpretive family tables and figures and retained in the audit ledger
+(\texttt{audit\_asjp\_bookkeeping\_family.csv}).
+
+\input{tables/tableS12}
+\input{tables/tableS13}
+
+\begin{figure}[htbp]\centering
+\includegraphics[width=\textwidth]{figures/figureS1_family_boundary_ppc.pdf}
+\caption{Family-level boundary concentration and model misfit are not equivalent.
+Existing final figure, reused verbatim. Source:
+\texttt{results/figureS1\_family\_boundary\_ppc.csv}.}
+\label{fig:s1}
+\end{figure}
+\clearpage
+
+% ============================================================
+\section{Areal and hemispheric heterogeneity}
+% ============================================================
+Broad macroarea adjustment removes approximately 48.0\% of the matched-sample
+association (median-based), whereas sample restriction alone produces only a modest
+change (Table~\ref{tab:s14}). Macroarea is a broad areal adjustment, not a complete
+areal control. The pooled Southern coefficient is not a universal reversal: the
+South is regionally heterogeneous (Table~\ref{tab:s15}), and Southern Eurasia
+($n=1$) is uninformative and is not interpreted. Latitude must not be treated as a
+globally invariant exposure.
+
+\input{tables/tableS14}
+\input{tables/tableS15}
+\clearpage
+
+% ============================================================
+\section{ASJP--Lexibank overlap and comparability}
+% ============================================================
+ASJP and Lexibank are independently assembled databases with partially overlapping
+language coverage; they are not statistically independent language samples. A
+descriptive overlap audit would require a stable shared identifier. The committed
+Result CSVs contain no shared cross-database identifier (no Glottocode, and no
+per-language Lexibank table), and the raw CLDF databases are not part of this
+repository, so the overlap cannot be computed from the committed evidence package.
+Table~\ref{tab:s16} reports the available counts and marks the non-computable cells
+transparently rather than populating them with fabricated values.
+
+\input{tables/tableS16}
+\clearpage
+
+% ============================================================
+\section{Computational reproducibility}
+% ============================================================
+Table~\ref{tab:s17} records the computational environment, distinguishing exact
+runtime versions recorded by the notebook from pip installation constraints.
+Table~\ref{tab:s18} maps each analysis to its repository and data SHAs, master seed
+and offset, Result CSV, NetCDF artifact, figure source, and notebook cell. The
+H100/GPU posterior models were not rerun to build this SI.
+
+\input{tables/tableS17}
+\input{tables/tableS18}
+\clearpage
+
+\section*{Data and code availability}
+All tables and figures in this SI are generated from the Result CSV files in
+\texttt{results/} by the scripts in \texttt{supplement/scripts/}. Provenance and
+publication-facing values are recorded in \texttt{supplement/manifest.json}; the
+per-cell notebook inventory, source ledger, claim-to-evidence map, manuscript
+contract, and validation/consistency reports are in \texttt{supplement/generated/}.
+Data sources: ASJP \citep{asjp2022}, Lexibank \citep{list2022lexibank}, Glottolog
+\citep{glottolog2023}. Inference used NumPyro \citep{phan2019numpyro} on JAX
+\citep{jax2018} with ArviZ \citep{kumar2019arviz} diagnostics.
+
+\bibliographystyle{elsarticle-num}
+\bibliography{supplement}
+
+\end{document}

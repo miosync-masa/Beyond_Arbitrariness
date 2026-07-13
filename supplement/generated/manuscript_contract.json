@@ -1,0 +1,461 @@
+{
+  "_about": "Machine-readable manuscript contract: the publication-facing quantities the Supplementary Information must keep traceable. 'declared' is the manuscript's OWN rounded target (Section-5 checkpoint, source D, a consistency target only). 'csv_source' locates the authoritative value. Direct manuscript-source validation is NOT PERFORMED here because the external manuscript .tex/.bib are not in this repository; see manuscript_consistency_report.md.",
+  "direct_manuscript_source_validation": "NOT_PERFORMED (manuscript .tex/.bib absent from repository)",
+  "tolerances_by_kind": {
+    "count": 0.0,
+    "coefficient": 0.0015,
+    "share": 0.001,
+    "percentage": 0.2,
+    "fraction_pct": 0.002
+  },
+  "checkpoints": [
+    {
+      "id": "asjp_prefilter_languages",
+      "label": "ASJP pre-filter language summaries",
+      "kind": "count",
+      "layer": "manuscript_s5",
+      "manuscript_declared": 11393,
+      "authoritative_value_from_csv": 11393.0,
+      "csv_source": {
+        "file": "asjp_macroarea_sample_flow.csv",
+        "field": "n_languages",
+        "row_index": 0
+      },
+      "note": ""
+    },
+    {
+      "id": "asjp_prefilter_family_ids",
+      "label": "ASJP pre-filter family identifiers",
+      "kind": "count",
+      "layer": "manuscript_s5",
+      "manuscript_declared": 667,
+      "authoritative_value_from_csv": 667.0,
+      "csv_source": {
+        "file": "asjp_macroarea_sample_flow.csv",
+        "field": "n_families",
+        "row_index": 0
+      },
+      "note": ""
+    },
+    {
+      "id": "asjp_primary_languages",
+      "label": "ASJP primary inferential languages",
+      "kind": "count",
+      "layer": "manuscript_s5",
+      "manuscript_declared": 10886,
+      "authoritative_value_from_csv": 10886.0,
+      "csv_source": {
+        "file": "asjp_macroarea_sample_flow.csv",
+        "field": "n_languages",
+        "row_index": 1
+      },
+      "note": ""
+    },
+    {
+      "id": "asjp_primary_family_ids",
+      "label": "ASJP primary family identifiers",
+      "kind": "count",
+      "layer": "manuscript_s5",
+      "manuscript_declared": 646,
+      "authoritative_value_from_csv": 646.0,
+      "csv_source": {
+        "file": "asjp_macroarea_sample_flow.csv",
+        "field": "n_families",
+        "row_index": 1
+      },
+      "note": ""
+    },
+    {
+      "id": "lexibank_languages",
+      "label": "Lexibank languages",
+      "kind": "count",
+      "layer": "manuscript_s5",
+      "manuscript_declared": 5501,
+      "authoritative_value_from_csv": 5501.0,
+      "csv_source": {
+        "file": "lexibank_family_audit.csv",
+        "field": "n_languages",
+        "row_index": 0
+      },
+      "note": ""
+    },
+    {
+      "id": "macroarea_matched_languages",
+      "label": "Macroarea matched languages",
+      "kind": "count",
+      "layer": "manuscript_s5",
+      "manuscript_declared": 10626,
+      "authoritative_value_from_csv": 10626.0,
+      "csv_source": {
+        "file": "asjp_macroarea_sample_flow.csv",
+        "field": "n_languages",
+        "row_index": 2
+      },
+      "note": ""
+    },
+    {
+      "id": "macroarea_matched_family_ids",
+      "label": "Macroarea matched family identifiers",
+      "kind": "count",
+      "layer": "manuscript_s5",
+      "manuscript_declared": 386,
+      "authoritative_value_from_csv": 386.0,
+      "csv_source": {
+        "file": "asjp_macroarea_sample_flow.csv",
+        "field": "n_families",
+        "row_index": 2
+      },
+      "note": ""
+    },
+    {
+      "id": "macroarea_unlinked_languages",
+      "label": "Macroarea-unlinked languages",
+      "kind": "count",
+      "layer": "manuscript_s5",
+      "manuscript_declared": 260,
+      "authoritative_value_from_csv": 260.0,
+      "csv_source": {
+        "file": "asjp_macroarea_sample_difference.csv",
+        "field": "languages_excluded",
+        "row_index": 0
+      },
+      "note": ""
+    },
+    {
+      "id": "primary_beta_lat",
+      "label": "ASJP primary beta_lat",
+      "kind": "coefficient",
+      "layer": "manuscript_s5",
+      "manuscript_declared": -0.151,
+      "authoritative_value_from_csv": -0.150880511295931,
+      "csv_source": {
+        "file": "paper1_beta_binomial_final_effects.csv",
+        "field": "median",
+        "match": {
+          "model": "ASJP Beta-Binomial primary",
+          "parameter": "beta_lat"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "lexibank_beta_lat",
+      "label": "Lexibank beta_lat",
+      "kind": "coefficient",
+      "layer": "manuscript_s5",
+      "manuscript_declared": -0.138,
+      "authoritative_value_from_csv": -0.13869478527093976,
+      "csv_source": {
+        "file": "paper1_beta_binomial_final_effects.csv",
+        "field": "median",
+        "match": {
+          "model": "Lexibank Beta-Binomial replication",
+          "parameter": "beta_lat"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "beta_initial",
+      "label": "beta_initial",
+      "kind": "coefficient",
+      "layer": "manuscript_s5",
+      "manuscript_declared": 0.028,
+      "authoritative_value_from_csv": 0.028521654356702134,
+      "csv_source": {
+        "file": "paper1_beta_binomial_final_effects.csv",
+        "field": "median",
+        "match": {
+          "model": "ASJP Beta-Binomial initial slope",
+          "parameter": "beta_lat_initial"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "beta_final",
+      "label": "beta_final",
+      "kind": "coefficient",
+      "layer": "manuscript_s5",
+      "manuscript_declared": -0.285,
+      "authoritative_value_from_csv": -0.2849887722500779,
+      "csv_source": {
+        "file": "paper1_beta_binomial_final_effects.csv",
+        "field": "median",
+        "match": {
+          "model": "ASJP Beta-Binomial final slope",
+          "parameter": "beta_lat_final"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "beta_final_minus_initial",
+      "label": "beta_final_minus_initial",
+      "kind": "coefficient",
+      "layer": "manuscript_s5",
+      "manuscript_declared": -0.313,
+      "authoritative_value_from_csv": -0.31319108536408996,
+      "csv_source": {
+        "file": "paper1_beta_binomial_final_effects.csv",
+        "field": "median",
+        "match": {
+          "model": "ASJP Beta-Binomial final-minus-initial",
+          "parameter": "beta_lat_final_delta"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "beta_between",
+      "label": "beta_between",
+      "kind": "coefficient",
+      "layer": "manuscript_s5",
+      "manuscript_declared": -0.348,
+      "authoritative_value_from_csv": -0.3480120309389172,
+      "csv_source": {
+        "file": "paper1_beta_binomial_final_effects.csv",
+        "field": "median",
+        "match": {
+          "model": "ASJP Beta-Binomial between-family",
+          "parameter": "beta_between"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "beta_within",
+      "label": "beta_within",
+      "kind": "coefficient",
+      "layer": "manuscript_s5",
+      "manuscript_declared": -0.033,
+      "authoritative_value_from_csv": -0.03278258845353566,
+      "csv_source": {
+        "file": "paper1_beta_binomial_final_effects.csv",
+        "field": "median",
+        "match": {
+          "model": "ASJP Beta-Binomial within-family",
+          "parameter": "beta_within"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "matched_no_macroarea_beta",
+      "label": "matched no-macroarea beta",
+      "kind": "coefficient",
+      "layer": "manuscript_s5",
+      "manuscript_declared": -0.138,
+      "authoritative_value_from_csv": -0.13772309187127096,
+      "csv_source": {
+        "file": "asjp_beta_binomial_macroarea_matched_comparison.csv",
+        "field": "median",
+        "match": {
+          "model": "ASJP BB matched sample without macroarea",
+          "parameter": "beta_lat"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "matched_macroarea_beta",
+      "label": "matched macroarea beta",
+      "kind": "coefficient",
+      "layer": "manuscript_s5",
+      "manuscript_declared": -0.072,
+      "authoritative_value_from_csv": -0.07166259129505512,
+      "csv_source": {
+        "file": "asjp_beta_binomial_macroarea_matched_comparison.csv",
+        "field": "median",
+        "match": {
+          "model": "ASJP BB matched sample with macroarea",
+          "parameter": "beta_lat"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "macroarea_attenuation",
+      "label": "macroarea attenuation (median-based, fraction)",
+      "kind": "fraction_pct",
+      "layer": "manuscript_s5",
+      "manuscript_declared": 0.476,
+      "authoritative_value_from_csv": 0.4796617595396583,
+      "csv_source": {
+        "file": "asjp_beta_binomial_macroarea_matched_comparison.csv",
+        "field": "attenuation_relative_to_no_macro",
+        "match": {
+          "model": "ASJP BB matched sample with macroarea",
+          "parameter": "beta_lat"
+        }
+      },
+      "note": "Manuscript text states 47.6%; authoritative median-based CSV value is 0.4797 (48.0%). Publication-facing value per approved correction = 48.0%. FLAG 47.6/47.7% for human correction."
+    },
+    {
+      "id": "north_beta",
+      "label": "north beta",
+      "kind": "coefficient",
+      "layer": "manuscript_s5",
+      "manuscript_declared": -0.23,
+      "authoritative_value_from_csv": -0.23011290551380867,
+      "csv_source": {
+        "file": "paper1_beta_binomial_final_effects.csv",
+        "field": "median",
+        "match": {
+          "model": "ASJP BB North slope",
+          "parameter": "beta_lat_north"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "south_beta",
+      "label": "south beta",
+      "kind": "coefficient",
+      "layer": "manuscript_s5",
+      "manuscript_declared": 0.527,
+      "authoritative_value_from_csv": 0.5259226050581991,
+      "csv_source": {
+        "file": "paper1_beta_binomial_final_effects.csv",
+        "field": "median",
+        "match": {
+          "model": "ASJP BB South slope",
+          "parameter": "beta_lat_south"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "leave_both_final_minus_initial",
+      "label": "leave-both final-minus-initial",
+      "kind": "coefficient",
+      "layer": "manuscript_s5",
+      "manuscript_declared": -0.242,
+      "authoritative_value_from_csv": -0.24216859064286578,
+      "csv_source": {
+        "file": "asjp_position_excluding_top_two_boundary_families.csv",
+        "field": "median",
+        "match": {
+          "model": "ASJP BB final-minus-initial excluding top two boundary families",
+          "parameter": "beta_lat_final_delta"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "leave_atlantic_congo_beta",
+      "label": "leave Atlantic-Congo beta_lat",
+      "kind": "coefficient",
+      "layer": "repo_internal",
+      "manuscript_declared": null,
+      "authoritative_value_from_csv": -0.06931371385156412,
+      "csv_source": {
+        "file": "asjp_boundary_family_exclusion_sensitivity.csv",
+        "field": "median",
+        "match": {
+          "model": "ASJP BB excluding Atlantic-Congo",
+          "parameter": "beta_lat"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "leave_austronesian_beta",
+      "label": "leave Austronesian beta_lat",
+      "kind": "coefficient",
+      "layer": "repo_internal",
+      "manuscript_declared": null,
+      "authoritative_value_from_csv": -0.2628946241249379,
+      "csv_source": {
+        "file": "asjp_boundary_family_exclusion_sensitivity.csv",
+        "field": "median",
+        "match": {
+          "model": "ASJP BB excluding Austronesian",
+          "parameter": "beta_lat"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "leave_both_beta",
+      "label": "leave both beta_lat",
+      "kind": "coefficient",
+      "layer": "repo_internal",
+      "manuscript_declared": null,
+      "authoritative_value_from_csv": -0.18672225332619308,
+      "csv_source": {
+        "file": "asjp_boundary_family_exclusion_sensitivity.csv",
+        "field": "median",
+        "match": {
+          "model": "ASJP BB excluding top two boundary families",
+          "parameter": "beta_lat"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "exact_one_observed_asjp",
+      "label": "ASJP observed exact-one share",
+      "kind": "share",
+      "layer": "repo_internal",
+      "manuscript_declared": null,
+      "authoritative_value_from_csv": 0.1924490170861657,
+      "csv_source": {
+        "file": "asjp_beta_binomial_ppc_summary.csv",
+        "field": "observed",
+        "match": {
+          "statistic": "share_rate_one"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "exact_one_ppc_asjp",
+      "label": "ASJP Beta-Binomial PPC exact-one median",
+      "kind": "share",
+      "layer": "repo_internal",
+      "manuscript_declared": null,
+      "authoritative_value_from_csv": 0.14881499173250046,
+      "csv_source": {
+        "file": "asjp_beta_binomial_ppc_summary.csv",
+        "field": "ppc_median",
+        "match": {
+          "statistic": "share_rate_one"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "exact_one_observed_lexibank",
+      "label": "Lexibank observed exact-one share",
+      "kind": "share",
+      "layer": "repo_internal",
+      "manuscript_declared": null,
+      "authoritative_value_from_csv": 0.17324122886747864,
+      "csv_source": {
+        "file": "lexibank_beta_binomial_ppc_summary.csv",
+        "field": "observed",
+        "match": {
+          "statistic": "share_rate_one"
+        }
+      },
+      "note": ""
+    },
+    {
+      "id": "exact_one_ppc_lexibank",
+      "label": "Lexibank Beta-Binomial PPC exact-one median",
+      "kind": "share",
+      "layer": "repo_internal",
+      "manuscript_declared": null,
+      "authoritative_value_from_csv": 0.1456098891110707,
+      "csv_source": {
+        "file": "lexibank_beta_binomial_ppc_summary.csv",
+        "field": "ppc_median",
+        "match": {
+          "statistic": "share_rate_one"
+        }
+      },
+      "note": ""
+    }
+  ]
+}

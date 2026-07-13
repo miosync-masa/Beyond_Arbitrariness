@@ -1,0 +1,25 @@
+\begin{table}[htbp]\centering
+\footnotesize
+\caption{Boundary mass by minimum total word count.}
+\label{tab:s9}
+\resizebox{\ifdim\width>\linewidth \linewidth\else\width\fi}{!}{%
+\begin{tabular}{l r r r r r r}
+\toprule
+Database & Min.\ total words & N lang. & Median total words & Share $=1.00$ & Share $\ge 0.99$ & Share $\ge 0.95$ \\
+\midrule
+ASJP & 20 & 10,886 & 40 & 0.192 & 0.195 & 0.257 \\
+ASJP & 40 & 5,655 & 57 & 0.180 & 0.184 & 0.253 \\
+ASJP & 60 & 2,699 & 88 & 0.179 & 0.188 & 0.272 \\
+ASJP & 80 & 1,850 & 96 & 0.194 & 0.206 & 0.292 \\
+ASJP & 100 & 743 & 109 & 0.106 & 0.137 & 0.190 \\
+Lexibank & 20 & 5,501 & 214 & 0.173 & 0.237 & 0.323 \\
+Lexibank & 40 & 5,501 & 214 & 0.173 & 0.237 & 0.323 \\
+Lexibank & 60 & 5,501 & 214 & 0.173 & 0.237 & 0.323 \\
+Lexibank & 80 & 5,501 & 214 & 0.173 & 0.237 & 0.323 \\
+Lexibank & 100 & 5,009 & 230 & 0.160 & 0.230 & 0.311 \\
+\bottomrule
+\end{tabular}
+}
+
+\par\smallskip{\footnotesize\emph{Note.} The robustness sweep varies the minimum \emph{total word count} (\texttt{min\_n\_total}); it is NOT a concept-count sweep. The inferential inclusion criterion throughout the paper is a fixed minimum of 20 concepts. The committed CSV records median total words, not median concepts. Upper-boundary concentration persists across thresholds, so it is not merely a sparse-wordlist artifact; this does not identify a typological class.}
+\end{table}

@@ -1,0 +1,25 @@
+\begin{table}[htbp]\centering
+\footnotesize
+\caption{Analysis provenance and output-file map.}
+\label{tab:s18}
+\resizebox{\ifdim\width>\linewidth \linewidth\else\width\fi}{!}{%
+\begin{tabular}{l l l l l l l l c}
+\toprule
+Analysis & Repo SHA & Data SHA & Master seed & Offset & Result CSV & NetCDF artifact & Figure source & Cell \\
+\midrule
+ASJP BB primary & \texttt{d3ef7a8246} & \texttt{0127953495} & 20260711 & +301 & \texttt{asjp\_beta\_binomial\_primary\_effect.csv} & \texttt{asjp\_beta\_binomial\_primary.nc} & \texttt{figure2\_core\_posterior\_effects.csv} & 72 \\
+Lexibank BB replication & \texttt{d3ef7a8246} & \texttt{edf5f028de} & 20260711 & +305 & \texttt{lexibank\_beta\_binomial\_replication\_effect.csv} & \texttt{lexibank\_beta\_binomial\_replication.nc} & \texttt{figure2\_core\_posterior\_effects.csv} & 80 \\
+ASJP BB within/between & \texttt{d3ef7a8246} & \texttt{0127953495} & 20260711 & +302 & \texttt{asjp\_beta\_binomial\_within\_between\_effects.csv} & \texttt{asjp\_beta\_binomial\_within\_between.nc} & \texttt{figure2\_core\_posterior\_effects.csv} & 74 \\
+ASJP BB positional & \texttt{d3ef7a8246} & \texttt{0127953495} & 20260711 & +303 & \texttt{asjp\_beta\_binomial\_position\_effects.csv} & \texttt{asjp\_beta\_binomial\_position\_interaction.nc} & \texttt{figure1\_position\_specific\_gradients.csv} & 76 \\
+ASJP BB hemisphere & \texttt{d3ef7a8246} & \texttt{0127953495} & 20260711 & +304 & \texttt{asjp\_beta\_binomial\_hemisphere\_effects.csv} & \texttt{asjp\_beta\_binomial\_hemisphere.nc} & \texttt{figure2\_core\_posterior\_effects.csv} & 78 \\
+ASJP BB family+macroarea & \texttt{d3ef7a8246} & \texttt{0127953495} & 20260711 & +306 & \texttt{asjp\_beta\_binomial\_macroarea\_effect.csv} & \texttt{asjp\_beta\_binomial\_macroarea\_control.nc} & \texttt{figure3\_macroarea\_attenuation.csv} & 85 \\
+ASJP BB Southern macroarea & \texttt{d3ef7a8246} & \texttt{0127953495} & 20260711 & +307 & \texttt{asjp\_beta\_binomial\_south\_macroarea\_effects.csv} & \texttt{asjp\_beta\_binomial\_south\_macroarea\_slopes.nc} & \texttt{figure3\_southern\_macroarea\_slopes.csv} & 86 \\
+ASJP BB matched, no macroarea & \texttt{d3ef7a8246} & \texttt{0127953495} & 20260711 & +308 & \texttt{asjp\_beta\_binomial\_macroarea\_matched\_comparison.csv} & \texttt{asjp\_beta\_binomial\_macroarea\_matched\_no\_macroarea.nc} & \texttt{figure3\_macroarea\_attenuation.csv} & 100 \\
+Leave-family-out & \texttt{d3ef7a8246} & \texttt{0127953495} & 20260711 & +410 & \texttt{asjp\_boundary\_family\_exclusion\_sensitivity.csv} & \texttt{(not committed)} & \texttt{figure2\_core\_posterior\_effects.csv} & 95 \\
+Leave-top-two positional & \texttt{d3ef7a8246} & \texttt{0127953495} & 20260711 & +420 & \texttt{asjp\_position\_excluding\_top\_two\_boundary\_families.csv} & \texttt{(not committed)} & \texttt{figure2\_core\_posterior\_effects.csv} & 97 \\
+\bottomrule
+\end{tabular}
+}
+
+\par\smallskip{\footnotesize\emph{Note.} Repo SHA is the results-provenance SHA from \texttt{reproducibility\_metadata.json}; the SI was built at HEAD \texttt{562dee88b5}. NetCDF posterior artifacts are named by the notebook but are not committed to the repository; the H100/GPU models were NOT rerun to build this SI.}
+\end{table}

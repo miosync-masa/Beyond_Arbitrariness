@@ -1,0 +1,21 @@
+\begin{table}[htbp]\centering
+\footnotesize
+\caption{Prior specification and parameterisation.}
+\label{tab:s6}
+\resizebox{\ifdim\width>\linewidth \linewidth\else\width\fi}{!}{%
+\begin{tabular}{p{0.24\textwidth} p{0.24\textwidth} p{0.44\textwidth}}
+\toprule
+Parameter & Prior & Role \\
+\midrule
+$\alpha$ (intercept) & $\mathrm{Normal}(0,\,1.5)$ & global log-odds intercept \\
+$\beta_{\mathrm{lat}}$ and all slope terms & $\mathrm{Normal}(0,\,1)$ & latitude / level / interaction slopes (\texttt{beta\_lat}, \texttt{beta\_lat\_north}, \texttt{beta\_south\_level}, \texttt{beta\_lat\_south\_delta}, \texttt{beta\_between}, \texttt{beta\_within}, \texttt{beta\_lat\_initial}, \texttt{beta\_final\_level}, \texttt{beta\_lat\_final\_delta}) \\
+$\sigma_{\mathrm{family}},\ \sigma_{\mathrm{language}}$ & $\mathrm{Exponential}(1)$ & random-effect standard deviations (family; and language in the positional model) \\
+$z_{\mathrm{family}},\ z_{\mathrm{language}}$ & $\mathrm{Normal}(0,1)$, then mean-centred & non-centred, sum-to-zero standardised random intercepts \\
+macroarea effects & $\mathrm{Normal}(0,\,0.75)$ & fixed categorical intercepts/slopes for the six observed macroareas (deliberately NOT hierarchical) \\
+$\phi$ (Beta-Binomial concentration) & $\mathrm{LogNormal}(\log 20,\,1)$ & overdispersion parameter of the reported Beta-Binomial likelihood \\
+\bottomrule
+\end{tabular}
+}
+
+\par\smallskip{\footnotesize\emph{Note.} Likelihoods: $y \sim \mathrm{Binomial}(n,\ \mathrm{logit}^{-1}\eta)$ (superseded layer) and $y \sim \mathrm{BetaBinomial}(n,\ \mu\phi,\ (1-\mu)\phi)$ with $\mu=\mathrm{logit}^{-1}\eta$ (reported layer); linear predictor $\eta=\alpha+\beta_{\mathrm{lat}}\,z_{\mathrm{lat}}+\sigma_{\mathrm{family}}z_{\mathrm{family}[i]}$. Latitude is $|\mathrm{Latitude}|$ z-scored with population SD (\texttt{ddof=0}); it is a composite geographic coordinate, not a causal exposure. Family random intercepts model family-level clustering and are NOT full phylogenetic control. The positional model adds language-level intercepts; the initial--final contrast is a within-language comparison. Priors are read from notebook cells 11 and 70, not inferred from posteriors.}
+\end{table}

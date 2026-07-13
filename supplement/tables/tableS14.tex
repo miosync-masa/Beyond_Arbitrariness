@@ -1,0 +1,18 @@
+\begin{table}[htbp]\centering
+\footnotesize
+\caption{Matched-sample macroarea adjustment.}
+\label{tab:s14}
+\resizebox{\ifdim\width>\linewidth \linewidth\else\width\fi}{!}{%
+\begin{tabular}{l r r l r r}
+\toprule
+Model & N lang. & N fam. & $\beta_{\mathrm{lat}}$ [95\% CrI] & OR per SD & Attenuation \\
+\midrule
+Full primary, family-only & 10,886 & 646 & -0.151 [-0.195, -0.105] & 0.860 & -- \\
+Matched, family-only & 10,626 & 386 & -0.138 [-0.183, -0.092] & 0.871 & -- \\
+Matched, family + macroarea & 10,626 & 386 & -0.072 [-0.123, -0.021] & 0.931 & 48.0\% \\
+\bottomrule
+\end{tabular}
+}
+
+\par\smallskip{\footnotesize\emph{Note.} Broad macroarea adjustment removes approximately 48.0\% of the matched-sample association (median-based, $1-0.0717/0.1377$). Sample restriction alone (full $\rightarrow$ matched) produces only a modest change. Macroarea is a broad areal adjustment, not a complete areal control; latitude is not a globally invariant exposure.}
+\end{table}

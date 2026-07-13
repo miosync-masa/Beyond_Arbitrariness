@@ -1,0 +1,27 @@
+\begin{table}[htbp]\centering
+\footnotesize
+\caption{Computational environment.}
+\label{tab:s17}
+\resizebox{\ifdim\width>\linewidth \linewidth\else\width\fi}{!}{%
+\begin{tabular}{l l l l}
+\toprule
+Component & Recorded runtime version & pip install constraint & Source \\
+\midrule
+Python & not recorded at runtime & -- & Colab runtime \\
+JAX & 0.7.2 & -- & cell 3 stdout \\
+NumPyro & 0.19.0 & >=0.16,<0.20 & cell 3 stdout / cell 2 pin \\
+ArviZ & not recorded & >=0.20,<0.23 & cell 2 pin \\
+pandas & not recorded & >=2.2,<3 & cell 2 pin \\
+NumPy & not recorded & -- & bundled with runtime \\
+SciPy & not recorded & >=1.13,<2 & cell 2 pin \\
+matplotlib & not recorded & >=3.9,<4 & cell 2 pin \\
+pyarrow & not recorded & >=17,<22 & cell 2 pin \\
+netCDF4 & not recorded & >=1.7 & cell 2 pin \\
+Accelerator & CudaDevice(id=0), A100 (declared) & -- & cell 3 / notebook metadata \\
+Backend / device & gpu / cuda:0 & -- & reproducibility\_metadata.json \\
+\bottomrule
+\end{tabular}
+}
+
+\par\smallskip{\footnotesize\emph{Note.} pip constraints are installation bounds, not the exact installed versions. Only JAX and NumPyro versions were printed at runtime; Python, ArviZ, pandas, NumPy and SciPy exact versions were not recorded. \texttt{jax\_enable\_x64=True}; master seed 20260711.}
+\end{table}

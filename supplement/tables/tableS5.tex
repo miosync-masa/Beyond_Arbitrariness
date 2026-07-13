@@ -1,0 +1,17 @@
+\begin{table}[htbp]\centering
+\footnotesize
+\caption{Macroarea linkage audit summary.}
+\label{tab:s5}
+\resizebox{\ifdim\width>\linewidth \linewidth\else\width\fi}{!}{%
+\begin{tabular}{l r r r}
+\toprule
+Linkage outcome & Languages & Family ids & Isolate/unknown \\
+\midrule
+included & 10,626 & 386 & 0 \\
+no\_macroarea\_match\_by\_Language\_ID & 260 & 260 & 260 \\
+\bottomrule
+\end{tabular}
+}
+
+\par\smallskip{\footnotesize\emph{Note.} Macroarea source: ASJP \texttt{languages.csv} column \texttt{Macroarea}; inner merge on \texttt{Language\_ID}; 11,540 source rows, 0 duplicate identifiers, 11,115 languages with a macroarea. The complete 260-language exclusion ledger is retained as \texttt{asjp\_macroarea\_dropped\_languages.csv}; every excluded language is isolate/unknown, not a missing-macroarea case.}
+\end{table}

@@ -1,0 +1,24 @@
+\begin{table}[htbp]\centering
+\footnotesize
+\caption{Cross-database language overlap (audit; not computable from committed artifacts).}
+\label{tab:s16}
+\resizebox{\ifdim\width>\linewidth \linewidth\else\width\fi}{!}{%
+\begin{tabular}{p{0.45\textwidth} r}
+\toprule
+Quantity & Value \\
+\midrule
+ASJP primary languages & 10,886 \\
+Lexibank languages & 5,501 \\
+Shared identifiers & not computable \\
+ASJP-only & not computable \\
+Lexibank-only & not computable \\
+Percentage of ASJP overlapping & not computable \\
+Percentage of Lexibank overlapping & not computable \\
+Identifier used & none available (no Glottocode / shared key in committed CSVs) \\
+Unmatched or ambiguous records & not computable \\
+\bottomrule
+\end{tabular}
+}
+
+\par\smallskip{\footnotesize\emph{Note.} The committed Result CSVs contain no shared cross-database identifier (no Glottocode, and no per-language Lexibank table), and the raw CLDF databases are not in this repository, so the overlap cannot be computed from the committed evidence package. ASJP and Lexibank are independently assembled databases with partially overlapping language coverage; they are not statistically independent language samples. This cell is marked incomplete rather than populated with fabricated values.}
+\end{table}

@@ -1,0 +1,21 @@
+\begin{table}[htbp]\centering
+\footnotesize
+\caption{Segment and vowel classification rules.}
+\label{tab:s2}
+\resizebox{\ifdim\width>\linewidth \linewidth\else\width\fi}{!}{%
+\begin{tabular}{p{0.20\textwidth} p{0.36\textwidth} p{0.36\textwidth}}
+\toprule
+Rule & ASJP & Lexibank (IPA) \\
+\midrule
+Vowel definition & character in ASJP\_VOWELS = \{i e E 3 a u o\} & token whose first non-diacritic character is an IPA vowel (25-symbol set) \\
+Ignored / stripped symbols & keep only ASJP vowel/consonant symbols; all modifiers dropped & strip length, nasalisation, phonation, stress, tone diacritics (IPA\_STRIP) before classifying \\
+Segment extraction rule & per-character: retain symbols in the ASJP vowel or consonant set & split \texttt{Segments} on spaces (\texttt{+}$\rightarrow$space); drop empty tokens \\
+Initial-segment rule & initial vowel $=1$ iff first segment is a vowel & initial vowel $=1$ iff first segment is a vowel \\
+Final-segment rule & final vowel $=1$ iff last segment is a vowel; final cluster $=$ trailing consonant count & same rule applied to IPA segments \\
+Malformed / empty forms & non-string or no valid segment $\rightarrow$ empty list, language contributes no counts & non-string/empty or all-diacritic $\rightarrow$ dropped \\
+\bottomrule
+\end{tabular}
+}
+
+\par\smallskip{\footnotesize\emph{Note.} Definitions taken verbatim from notebook cell~6 (\texttt{ASJP\_VOWELS}, \texttt{IPA\_VOWELS}, \texttt{IPA\_STRIP}, \texttt{asjp\_segments}, \texttt{ipa\_segments}, \texttt{final\_cluster}) and the aggregation in cell~7. Word-final vowel occurrence is measured directly; it is a plausible correlate of, but not identical to, open-syllable structure.}
+\end{table}
